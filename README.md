@@ -1,8 +1,6 @@
-# selfflow
+# SelfFlow
 
-<!--
-![SelfFlow logo](http://aslab.org/static/images/SelfFlowlogo-160.png)
--->
+![SelfFlow logo](http://aslab.org/images/logos/SelfFlow_logo.png)
 
 ## Purpose
 
