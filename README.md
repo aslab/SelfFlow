@@ -1,14 +1,12 @@
 # SelfFlow
 
-![SelfFlow logo](http://aslab.org/images/logos/SelfFlow_logo.png)
-
 ## Purpose
 
-**SelfFlow** addresses the flow of self-knowledge between intelligent autonomous agents in teaming contexts.
+The **SelfFlow** project addresses the flow of self-knowledge between intelligent autonomous agents in teaming contexts.
 
 The project does not target robot teamwork or collaboratio, the focus theme is the **transfer of self-knowledge** to be used for cooperative work of heterogeneous robot teams.
 
-## Basic Scenario
+## A Basic Scenario
 
 An UGV is searching and collecting tennis balls in a tennis court (or other more cluttered environment to make the task harder). It has difficulties finding the balls due to limited vision capability (e.g. it only has short-ranged ultrasound or close cameras).
 
@@ -29,3 +27,5 @@ The work is to devise a representation/engine/protocol to store, exploit and int
 ## Context
 
 ## References
+
+![SelfFlow logo](http://aslab.org/images/logos/SelfFlow_logo.png)
