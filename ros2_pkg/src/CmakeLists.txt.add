@@ -1,0 +1,9 @@
+
+find_package(builtin_interfaces REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+
+
+rosidl_generate_interfaces(new_msg
+  "msg/pub.msg"
+  DEPENDENCIES builtin_interfaces
+)
