@@ -1,24 +1,9 @@
 #include "tasklist.h"
 
 
-/* ejemplo:
- task=select(t_id);
- ability=task.ability()
- task.execute()
+/* declaration example(in main? )
+std::vector<task> private_tasks;
 */
-
-
-
-
-vector<task> tasks;
-
-
-
-
-void clear_tasks(){
-        tasks.clear();
-}
-
 
 
  void security(){
@@ -37,29 +22,26 @@ void clear_tasks(){
         for (std::vector<xtask>::iterator it = public_task_queue.begin(); it!= public_task_queue.end(); ++it){
                 tasks.pushback((*it).task);
         }
+	//do something about interest, maybe a formula
  }
 
- void find_best(tasklist my_tasks);
+ task * find_best(std::vector<task> tasks);
 
-  task * task;
-  UTILITY_T ut=0;
-  for i in tasklist{
+	task * taskptr;
+	UTILITY_T util=0,curr_util;
+	for (std::vector<task>::iterator it = tasks.begin(); it!= tasks.end(); ++it){
 
-        curr_ut=evaluate_ability(my_tasks[i]);
-        if (curr_ut>ut){
-        ut=curr_ut;
-        task=&my_tasks[i];
-  }
+        	curr_util=evaluate_utility(it);
+        	if (curr_ut>ut){
+        	util=curr_util;
+        	taskptr=it; //is this right?
+  	}
+  	return taskptr;
  }
 
 
 
 
-/* ejemplo:
- task=select(t_id);
- ability=task.ability()
- task.execute()
-*/
 
 
 

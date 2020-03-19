@@ -6,20 +6,29 @@ class AgentNode : public rclcpp::Node
 {
 private:
 
+    bool timer_active;
+
     std::vector<task> tasks;
 
-    rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr TimeTopic;
-    rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr PubTopic;
+    rclcpp::Subscription<MY_MSG_TYPE>::SharedPtr NetSub;
+    rclcpp::Subscription<MY_MSG_TYPE>::SharedPtr CommonNetSub;
+    rclcpp::Publisher<MY_MSG_TYPE>::SharedPtr NetPub;
+    rclcpp::Publisher<MY_MSG_TYPE>::SharedPtr CommonNetPub;
     rclcpp::TimerBase::SharedPtr timer;
+
+
 
 public:
     AgentNode(): Node(nodeName())
     {
+/*
         currentTimeUpdated=time();
         currentTime=currentTimeUpdated;
-        AnySub = this->create_subscription<std_msgs::msg::Bool>(AnyTopic, 1, std::bind(&AgentNode::AnyCallback, this, _1));
-        AnyPub = this->create_publisher<std_msgs::msg::Float32>(AnyTopic, 1);
+*/
+	CommonNetSub = this->create_subscription<MY_MSG_TYPE>(CommonTopic, 1, std::bind(&AgentNode::CommonNetCallback, this, _1));
+	CommonNetPub = this->create_publisher<MY_MSG_TYPE>(CommonTopic, 1);
         timer = this->create_wall_timer(5s, std::bind(&AgentNode::timerCallback, this));
+	find_network();
     }
 
     unsigned int time() const
@@ -42,28 +51,38 @@ public:
 
     // Topic subscription callbacks:
 
-    void sensorCallback(const std_msgs::msg::Bool::SharedPtr sensTrigger)
-    {
-        currentTimeUpdated=time();
-        sensorTrigger=sensTrigger->data;
+    find_network(){
+        NetSub = this->create_subscription<MY_MSG_TYPE>(TopicName(), 1, std::bind(&AgentNode::NetCallback, this, _1));
+
     }
 
-    void simulationTimeCallback(const std_msgs::msg::Float32::SharedPtr simTime)
+    void CommonNetCallback(){
+
+	//find a network or try to add new members to network
+
+    }
+
+    void NetCallback(const MY_MSG_TYPE::SharedPtr msg)
     {
-        simulationTime=simTime->data;
+
+	//process message and continue
+
+
     }
 
     void timerCallback()
     {
 //	recalculate task utilities and change task if necessary. can be disabled if required by task
-
+	if(timer_active){
+	    evaluate_objective();
+	}
     }
 
-    void evaluate_objective_callback(){
+    void evaluate_objective(){ //needs work
 
 	clear_tasks();
 	security();
-	pwr_mgmt(); //publish(pwr)
+	pwr_mgmt();
 	comply(.5);
 	task best=find_best(tasks);
 	best.execute();
