@@ -1,6 +1,18 @@
+#include <rclcpp/rclcpp.hpp>
+#include <chrono>
+#include <boost/lexical_cast.hpp>
+#include "std_msgs/msg/bool.hpp"
+
 #include "tasklist.h"
-#include "rclcpp/rclcpp.hpp"
-#define AGENT_NAME
+
+#define AGENT_NAME "test"
+#define MY_MSG_TYPE std_msgs::msg::Bool
+#define TOPIC	"testtopic"
+#define COMMON_TOPIC "commontopic"
+#define EMPTY int i=0;
+
+using namespace std::chrono_literals;
+using std::placeholders::_1;
 
 class AgentNode : public rclcpp::Node
 {
@@ -8,7 +20,16 @@ private:
 
     bool timer_active;
 
-    std::vector<task> tasks;
+    bool sensorTrigger=false;
+    struct timeval tv;
+    unsigned int currentTimeUpdated=0;
+    float simulationTime=0.0;
+    float driveBackStartTime=-99.0f;
+    unsigned int currentTime=0;
+
+
+
+//    std::vector<task> tasks;
 
     rclcpp::Subscription<MY_MSG_TYPE>::SharedPtr NetSub;
     rclcpp::Subscription<MY_MSG_TYPE>::SharedPtr CommonNetSub;
@@ -21,14 +42,14 @@ private:
 public:
     AgentNode(): Node(nodeName())
     {
-/*
+
         currentTimeUpdated=time();
         currentTime=currentTimeUpdated;
-*/
-	CommonNetSub = this->create_subscription<MY_MSG_TYPE>(CommonTopic, 1, std::bind(&AgentNode::CommonNetCallback, this, _1));
-	CommonNetPub = this->create_publisher<MY_MSG_TYPE>(CommonTopic, 1);
+
+	CommonNetSub = this->create_subscription<MY_MSG_TYPE>(COMMON_TOPIC, 1, std::bind(&AgentNode::CommonNetCallback, this, _1));
+	CommonNetPub = this->create_publisher<MY_MSG_TYPE>(COMMON_TOPIC, 1);
         timer = this->create_wall_timer(5s, std::bind(&AgentNode::timerCallback, this));
-	find_network();
+//	find_network();
     }
 
     unsigned int time() const
@@ -51,14 +72,15 @@ public:
 
     // Topic subscription callbacks:
 
-    find_network(){
-        NetSub = this->create_subscription<MY_MSG_TYPE>(TopicName(), 1, std::bind(&AgentNode::NetCallback, this, _1));
+    void find_network(){
+        NetSub = this->create_subscription<MY_MSG_TYPE>(TOPIC, 1, std::bind(&AgentNode::NetCallback, this, _1));
 
     }
 
-    void CommonNetCallback(){
+    void CommonNetCallback(const std_msgs::msg::Bool::SharedPtr sensTrigger){
 
 	//find a network or try to add new members to network
+	EMPTY
 
     }
 
@@ -66,7 +88,7 @@ public:
     {
 
 	//process message and continue
-
+	EMPTY
 
     }
 
@@ -79,13 +101,13 @@ public:
     }
 
     void evaluate_objective(){ //needs work
-
-	clear_tasks();
-	security();
-	pwr_mgmt();
-	comply(.5);
-	task best=find_best(tasks);
-	best.execute();
+	EMPTY
+//	clear_tasks();
+//	security();
+//	pwr_mgmt();
+//	comply(.5);
+//	task best=find_best(tasks);
+//	best.execute();
     }
 };
 

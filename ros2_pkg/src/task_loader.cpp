@@ -4,6 +4,7 @@
 #define ID_T int
 #include <string>
 #include <sstream>
+#include "msg/pub.?" ??
 
 class xtask{ //task metadata
  private:
@@ -16,6 +17,8 @@ class xtask{ //task metadata
 	bool is_completed=0;
 	ID_T instance();
 //	CHECKSUM_T checksum;
+	auto message msg::pub();
+
  public:
 	xtask(task task, ID_T instance_id, TIME_T time, AGENT_ID_T publisher_id){
 	 this->task1=task;
@@ -25,17 +28,15 @@ class xtask{ //task metadata
 //	 this->checksum=checksum(task_queue);
 	}
 
-	std::string print(){
-		std::ostringstream data;
-		data<<"msg_pub"<<std::endl<<
-		"task: " << task1.name<< std::endl<<
-		"task_id: " << task1.id << std::endl<<
-		"instance_id; " << instance_id<< std::endl<<
-		"time: " << pub_time << std::endl<<
-		"publisher_id: " << publisher
-//		"checksum"
-		;
-		return std::string(data.str());
+	void print(){
+		message.type=1;
+		message.name=task1.name;
+		message.task_id=task1.id;
+		message.instance_id=task1.instance_id;
+		message.time=time();
+		message.agent_id=publisher;
+		message.checksum=checksum();
+		publish_function(message);
 	}
 };
 
