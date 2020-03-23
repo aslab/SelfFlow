@@ -19,13 +19,12 @@ class AgentNode : public rclcpp::Node
 private:
 
     bool timer_active;
+    bool is_connected;
 
     bool sensorTrigger=false;
-    struct timeval tv;
     unsigned int currentTimeUpdated=0;
-    float simulationTime=0.0;
-    float driveBackStartTime=-99.0f;
     unsigned int currentTime=0;
+    string topic;
 
 
 
@@ -38,6 +37,44 @@ private:
     rclcpp::TimerBase::SharedPtr timer;
 
 
+    void CommonNetCallback(const MY_PUB_MSG_TYPE::SharedPtr message){
+ 	if(is_connected){
+		if(message.type==1){
+			find_network();
+		}
+		else{
+		MY_PUB_MSG_TYPE message_2;
+		message_2.type=1;
+		message_2.data=this->topic;
+		CommonNetPub->publish(message_2); //publish topic name
+
+	}
+	else{
+		if(message.type==1)
+		topic=message.topic;
+		is_connected=1;
+	}
+
+    }
+
+    void NetCallback(const MY_MSG_TYPE::SharedPtr msg){
+
+        //process message and continue
+
+
+    }
+
+    void timerCallback(){
+        if(!is_connected){
+            find_network();
+        }
+//      recalculate task utilities and change task if necessary. can be disabled if required by task
+        if(timer_active){
+            evaluate_objective();
+        }
+    }
+
+
 
 public:
     AgentNode(): Node(nodeName())
@@ -48,8 +85,8 @@ public:
 
 	CommonNetSub = this->create_subscription<MY_MSG_TYPE>(COMMON_TOPIC, 1, std::bind(&AgentNode::CommonNetCallback, this, _1));
 	CommonNetPub = this->create_publisher<MY_MSG_TYPE>(COMMON_TOPIC, 1);
-        timer = this->create_wall_timer(5s, std::bind(&AgentNode::timerCallback, this));
-//	find_network();
+        timer = this->create_wall_timer(10s, std::bind(&AgentNode::timerCallback, this));
+// here?	find_network();
     }
 
     unsigned int time() const
@@ -70,34 +107,20 @@ public:
 
 
 
-    // Topic subscription callbacks:
 
     void find_network(){
-        NetSub = this->create_subscription<MY_MSG_TYPE>(TOPIC, 1, std::bind(&AgentNode::NetCallback, this, _1));
-
-    }
-
-    void CommonNetCallback(const std_msgs::msg::Bool::SharedPtr sensTrigger){
-
-	//find a network or try to add new members to network
-	EMPTY
-
-    }
-
-    void NetCallback(const MY_MSG_TYPE::SharedPtr msg)
-    {
-
-	//process message and continue
-	EMPTY
-
-    }
-
-    void timerCallback()
-    {
-//	recalculate task utilities and change task if necessary. can be disabled if required by task
-	if(timer_active){
-	    evaluate_objective();
+	is_connected=0;
+	MY_PUB_MSG_TYPE message;
+	message.type=2;//request
+	message.data=AGENT_NAME
+	CommonNetPub->publish(message)
+	sleep(10)
+	if(!is_connected){
+		topic= AGENT_NAME + "'s topic"
+		is_connected=1;
 	}
+        NetSub = this->create_subscription<MY_MSG_TYPE>(topic, 1, std::bind(&AgentNode::NetCallback, this, _1));
+        NetPub = this->create_publisher<MY_MSG_TYPE>(topic, 1);
     }
 
     void evaluate_objective(){ //needs work

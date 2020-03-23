@@ -17,7 +17,7 @@ class xtask{ //task metadata
 	bool is_completed=0;
 	ID_T instance();
 //	CHECKSUM_T checksum;
-	auto message msg::pub();
+	MY_MSG_TYPE message; //?
 
  public:
 	xtask(task task, ID_T instance_id, TIME_T time, AGENT_ID_T publisher_id){
@@ -28,20 +28,21 @@ class xtask{ //task metadata
 //	 this->checksum=checksum(task_queue);
 	}
 
-	void print(){
+	void prepare_msg(){
 		message.type=1;
 		message.name=task1.name;
 		message.task_id=task1.id;
 		message.instance_id=task1.instance_id;
 		message.time=time();
 		message.agent_id=publisher;
-		message.checksum=checksum();
-		publish_function(message);
+		message.checksum=checksum(public_task_queue.end().message);
 	}
 };
 
-// vector<xtask> public_task_queue;
-//
+ vector<xtask> public_task_queue;
+
+public_task_queue.end().
+
 // void store_task{
 //	task_queue.push_back(xtask)
 //}
