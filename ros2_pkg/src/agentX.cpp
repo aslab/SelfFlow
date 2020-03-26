@@ -4,12 +4,10 @@
 #include "std_msgs/msg/bool.hpp"
 
 #include "tasklist.h"
-
 #define AGENT_NAME "test"
 #define MY_MSG_TYPE std_msgs::msg::Bool
-#define TOPIC	"testtopic"
 #define COMMON_TOPIC "commontopic"
-#define EMPTY int i=0;
+
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
@@ -123,15 +121,6 @@ public:
         NetPub = this->create_publisher<MY_MSG_TYPE>(topic, 1);
     }
 
-    void evaluate_objective(){ //needs work
-	EMPTY
-//	clear_tasks();
-//	security();
-//	pwr_mgmt();
-//	comply(.5);
-//	task best=find_best(tasks);
-//	best.execute();
-    }
 };
 
 int main(int argc, char *argv[])
