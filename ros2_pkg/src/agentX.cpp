@@ -1,7 +1,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <chrono>
-#include <boost/lexical_cast.hpp>
-#include "std_msgs/msg/bool.hpp"
+#include "msg/"
 
 #include "tasklist.h"
 #include "utility.cpp"
@@ -120,20 +119,6 @@ public:
     }
 
 };
-
-int main(int argc, char *argv[])
-{
-
-    std::cout << "Starting " << AGENT_NAME << std::endl;
-
-    rclcpp::spin(std::make_shared<AgentNode>());
-
-    std::cout << "Shutting down "<< AGENT_NAME << std::endl;
-
-    rclcpp::shutdown();
-
-    return 0;
-}
 
 
 

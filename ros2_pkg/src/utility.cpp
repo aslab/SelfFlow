@@ -3,7 +3,7 @@
 #include "confidence.cpp"
 
 
-#define UTILITY_T 
+#define UTILITY_T float
 #define TIME_T ros::Time
 #define AGENT_ID_T uint32_t
 #define MY_MSG_TYPE 
