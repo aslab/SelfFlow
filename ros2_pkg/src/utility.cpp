@@ -1,11 +1,6 @@
 #include "tasklist.h"
 
 
-/* declaration example(in main? )
-std::vector<task> private_tasks;
-*/
-
-
  void security(){
 //private task "emergency stop" with interest=0 unless there is a risk involved
         tasks.push_back(emergency_stop);

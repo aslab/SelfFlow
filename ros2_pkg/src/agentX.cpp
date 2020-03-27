@@ -4,8 +4,13 @@
 #include "std_msgs/msg/bool.hpp"
 
 #include "tasklist.h"
+#include "task_queue.cpp"
+
+
 #define AGENT_NAME "test"
-#define MY_MSG_TYPE std_msgs::msg::Bool
+#define MY_MSG_TYPE 
+#define MY_PUB_MSG_TYPE 
+
 #define COMMON_TOPIC "commontopic"
 
 
@@ -23,7 +28,7 @@ private:
     unsigned int currentTimeUpdated=0;
     unsigned int currentTime=0;
     string topic;
-
+    task_queue public_task_queue;
 
 
 //    std::vector<task> tasks;
@@ -37,7 +42,7 @@ private:
 
     void CommonNetCallback(const MY_PUB_MSG_TYPE::SharedPtr message){
  	if(is_connected){
-		if(message.type==1){
+		if(message.type==1){ //join other network
 			find_network();
 		}
 		else{
@@ -47,7 +52,7 @@ private:
 		CommonNetPub->publish(message_2); //publish topic name
 
 	}
-	else{
+	else{	//join network
 		if(message.type==1)
 		topic=message.topic;
 		is_connected=1;
@@ -57,9 +62,7 @@ private:
 
     void NetCallback(const MY_MSG_TYPE::SharedPtr msg){
 
-        //process message and continue
-
-
+	public_task_queue.store(msg);
     }
 
     void timerCallback(){
@@ -68,9 +71,9 @@ private:
         }
 //      recalculate task utilities and change task if necessary. can be disabled if required by task
         if(timer_active){
-            evaluate_objective();
+//            evaluate_objective();
         }
-    }
+  }
 
 
 
@@ -84,9 +87,9 @@ public:
 	CommonNetSub = this->create_subscription<MY_MSG_TYPE>(COMMON_TOPIC, 1, std::bind(&AgentNode::CommonNetCallback, this, _1));
 	CommonNetPub = this->create_publisher<MY_MSG_TYPE>(COMMON_TOPIC, 1);
         timer = this->create_wall_timer(10s, std::bind(&AgentNode::timerCallback, this));
-// here?	find_network();
     }
 
+/*
     unsigned int time() const
     {
         auto now = std::chrono::steady_clock::now();
@@ -94,6 +97,7 @@ public:
         return now_sec.time_since_epoch().count();
     }
 
+*/
     std::string nodeName()
     {
         currentTimeUpdated=time()&0x00ffffff;
