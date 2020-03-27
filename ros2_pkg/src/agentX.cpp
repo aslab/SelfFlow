@@ -4,14 +4,14 @@
 #include "std_msgs/msg/bool.hpp"
 
 #include "tasklist.h"
-#include "task_queue.cpp"
+#include "utility.cpp"
 
 
 #define AGENT_NAME "test"
 #define MY_MSG_TYPE 
 #define MY_PUB_MSG_TYPE 
 
-#define COMMON_TOPIC "commontopic"
+#define COMMON_TOPIC "/commontopic"
 
 
 using namespace std::chrono_literals;
@@ -28,7 +28,7 @@ private:
     unsigned int currentTimeUpdated=0;
     unsigned int currentTime=0;
     string topic;
-    task_queue public_task_queue;
+    vector<MY_MSG_TYPE> public_task_register;
 
 
 //    std::vector<task> tasks;
@@ -41,39 +41,33 @@ private:
 
 
     void CommonNetCallback(const MY_PUB_MSG_TYPE::SharedPtr message){
- 	if(is_connected){
-		if(message.type==1){ //join other network
-			find_network();
-		}
-		else{
+ 	if(is_connected&&message.type==2){
 		MY_PUB_MSG_TYPE message_2;
 		message_2.type=1;
 		message_2.data=this->topic;
 		CommonNetPub->publish(message_2); //publish topic name
-
 	}
-	else{	//join network
-		if(message.type==1)
+	if(!is_connected&&message.type==1)
 		topic=message.topic;
-		is_connected=1;
+		this->connect();
 	}
 
     }
 
     void NetCallback(const MY_MSG_TYPE::SharedPtr msg){
 
-	public_task_queue.store(msg);
+	public_task_register.push_back(msg); //store msg
+	task_queue.add_task(msg);
     }
 
     void timerCallback(){
-        if(!is_connected){
-            find_network();
-        }
-//      recalculate task utilities and change task if necessary. can be disabled if required by task
-        if(timer_active){
-//            evaluate_objective();
-        }
-  }
+	if(timer_active){
+		if(!is_connected){
+        	        topic= AGENT_NAME + "'s topic"
+        	        this->connect();
+			timer_active=0;
+	}
+    }
 
 
 
@@ -114,15 +108,15 @@ public:
 	is_connected=0;
 	MY_PUB_MSG_TYPE message;
 	message.type=2;//request
-	message.data=AGENT_NAME
-	CommonNetPub->publish(message)
-	sleep(10)
-	if(!is_connected){
-		topic= AGENT_NAME + "'s topic"
-		is_connected=1;
-	}
-        NetSub = this->create_subscription<MY_MSG_TYPE>(topic, 1, std::bind(&AgentNode::NetCallback, this, _1));
-        NetPub = this->create_publisher<MY_MSG_TYPE>(topic, 1);
+	message.data=AGENT_NAME;
+	CommonNetPub->publish(message);
+	timer_active=1;
+    }
+
+    void connect(){
+	NetSub = this->create_subscription<MY_MSG_TYPE>(topic, 1, std::bind(&AgentNode::NetCallback, this, _1));
+	NetPub = this->create_publisher<MY_MSG_TYPE>(topic, 1);
+	is_connected=1;
     }
 
 };
