@@ -1,16 +1,24 @@
-#include <rclcpp/rclcpp.hpp>
-#include <chrono>
-#include "msg/"
+#include <cstdint>
+#include <vector>
+#include <string>
+
+#include "rclcpp/rclcpp.hpp"
+#include "selfflow/msg/taskdata.hpp"
+
+
+#define UTILITY_T float
+#define TIME_T int
+#define AGENT_ID_T uint32_t
+#define MY_MSG_TYPE selfflow::msg::Taskdata
+#define MY_PUB_MSG_TYPE selfflow::msg::Taskdata
+#define ID_T uint32_t
+#define AGENT_NAME "test"
+#define COMMON_TOPIC "/commontopic"
+
 
 #include "tasklist.h"
 #include "utility.cpp"
 
-
-#define AGENT_NAME "test"
-#define MY_MSG_TYPE 
-#define MY_PUB_MSG_TYPE 
-
-#define COMMON_TOPIC "/commontopic"
 
 
 using namespace std::chrono_literals;
@@ -39,32 +47,39 @@ private:
     rclcpp::TimerBase::SharedPtr timer;
 
 
-    void CommonNetCallback(const MY_PUB_MSG_TYPE::SharedPtr message){
- 	if(is_connected&&message.type==2){
+    void CommonNetCallback(const MY_PUB_MSG_TYPE::SharedPtr message)
+    {
+ 	if(is_connected && message->type==2)
+	{
 		MY_PUB_MSG_TYPE message_2;
 		message_2.type=1;
 		message_2.data=this->topic;
 		CommonNetPub->publish(message_2); //publish topic name
 	}
-	if(!is_connected&&message.type==1)
+	if(!is_connected&&message->type==1)
+	{
 		topic=message.topic;
 		this->connect();
 	}
 
     }
 
-    void NetCallback(const MY_MSG_TYPE::SharedPtr msg){
-
+    void NetCallback(const MY_MSG_TYPE::SharedPtr msg)
+    {
 	public_task_register.push_back(msg); //store msg
 	task_queue.add_task(msg);
     }
 
-    void timerCallback(){
-	if(timer_active){
-		if(!is_connected){
+    void timerCallback()
+    {
+	if(timer_active)
+        {
+		if(!is_connected)
+                {
         	        topic= AGENT_NAME + "'s topic"
         	        this->connect();
 			timer_active=0;
+                }
 	}
     }
 
@@ -95,7 +110,7 @@ public:
     {
         currentTimeUpdated=time()&0x00ffffff;
         std::string nodeName(AGENT_NAME);
-        std::string randId(boost::lexical_cast<std::string>(currentTimeUpdated+int(999999.0f*(rand()/(float)RAND_MAX))));
+        std::string randId(string(currentTimeUpdated+int(999999.0f*(rand()/(float)RAND_MAX))));
         nodeName+=randId;
         return nodeName;
     }
@@ -103,7 +118,8 @@ public:
 
 
 
-    void find_network(){
+    void find_network()
+    {
 	is_connected=0;
 	MY_PUB_MSG_TYPE message;
 	message.type=2;//request
@@ -112,7 +128,8 @@ public:
 	timer_active=1;
     }
 
-    void connect(){
+    void connect()
+    {
 	NetSub = this->create_subscription<MY_MSG_TYPE>(topic, 1, std::bind(&AgentNode::NetCallback, this, _1));
 	NetPub = this->create_publisher<MY_MSG_TYPE>(topic, 1);
 	is_connected=1;

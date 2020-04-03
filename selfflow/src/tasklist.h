@@ -1,12 +1,12 @@
 #ifndef _TASKLIST_
 #define _TASKLIST_
 #include <string>
-#define ID_TYPE int
 
 
-struct task{
+struct task
+{
  std::string name;
- ID_TYPE id;
+ ID_T id;
 };
 
 const task find_ball = {"find_ball",1};
