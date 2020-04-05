@@ -4,7 +4,7 @@
 #include "ability.cpp"
 
 
-typedef struct xtask
+struct xtask
 {
 	task taskdata;
 	TIME_T pub_time;
