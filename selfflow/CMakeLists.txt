@@ -24,6 +24,7 @@ find_package(rmw_implementation_cmake REQUIRED)
 
 set(msg_files
   "msg/Taskdata.msg"
+  "msg/Common.msg"
 )
 
  rosidl_generate_interfaces(${PROJECT_NAME}
@@ -32,7 +33,7 @@ set(msg_files
 
 
 add_executable(selfflow_agent
- src/agentX.cpp
+ src/test.cpp
 )
 
 ament_target_dependencies(selfflow_agent
