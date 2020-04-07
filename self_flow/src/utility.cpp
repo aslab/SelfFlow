@@ -1,12 +1,11 @@
 #include "tasklist.h"
 //#include "implementation.cpp"
 #include "confidence.cpp"
-#include "ability.cpp"
 
 
 struct xtask
 {
-	task taskdata;
+	task * task_;
 	TIME_T pub_time;
 	AGENT_ID_T publisher;
 	UTILITY_T utility;
@@ -18,12 +17,13 @@ class task_queue
 {
   private:
 	std::vector<xtask> queue;
+	xtask  best;
 
   public:
 	void add_task(MY_MSG_TYPE message)
 	{
 		xtask temp;
-//		temp.taskdata=sort(message)  //find related task
+//		temp.task_=find_task(message.task_id); //find related task
 //		temp.pub_time=message.stamp; 		??
 		temp.publisher=message.agent_id;
 		temp.instance_id=message.instance_id;
@@ -56,19 +56,27 @@ class task_queue
 //		return message;
 //	}
 
+
 	void calc_utility()
 	{
-		for (std::vector<xtask>::iterator it = queue.begin(); it!= queue.end(); ++it)
+		UTILITY_T max=0;
+		for (auto it : queue)
+		{
+			it.utility=it.task_->ability();// * confidence();// * interest();
+			if (it.utility > max)
 			{
-			it->utility=ability(it->taskdata.id)*confidence();//*interest();
+				max=it.utility;
+				best=it;
 			}
+		}
 	}
+
 
 	void update()
 	{
 
 		calc_utility();
-		//execute_best();
+		best.task_->execute();
 	}
 };
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(selfflow)
+project(self_flow)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -32,11 +32,11 @@ set(msg_files
  )
 
 
-add_executable(selfflow_agent
+add_executable(agent_test
  src/test.cpp
 )
 
-ament_target_dependencies(selfflow_agent
+ament_target_dependencies(agent_test
  "rclcpp"
 )
 
@@ -45,12 +45,12 @@ find_package("${rmw_implementation}" REQUIRED)
 get_rmw_typesupport(typesupport_impls "${rmw_implementation}" LANGUAGE "cpp")
 
 foreach(typesupport_impl ${typesupport_impls})
-  rosidl_target_interfaces(selfflow_agent
+  rosidl_target_interfaces(agent_test
     ${PROJECT_NAME} ${typesupport_impl}
   )
 endforeach()
 
-install(TARGETS selfflow_agent
+install(TARGETS agent_test
   DESTINATION bin)
 
 

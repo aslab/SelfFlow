@@ -3,15 +3,15 @@
 #include <string>
 
 #include "rclcpp/rclcpp.hpp"
-#include "selfflow/msg/taskdata.hpp"
-#include "selfflow/msg/common.hpp"
+#include "self_flow/msg/taskdata.hpp"
+#include "self_flow/msg/common.hpp"
 
 
 #define UTILITY_T float
 #define TIME_T int
 #define AGENT_ID_T uint32_t
-#define MY_MSG_TYPE selfflow::msg::Taskdata
-#define MY_PUB_MSG_TYPE selfflow::msg::Common
+#define MY_MSG_TYPE self_flow::msg::Taskdata
+#define MY_PUB_MSG_TYPE self_flow::msg::Common
 #define ID_T uint32_t
 #define AGENT_NAME "test"
 #define COMMON_TOPIC "/commontopic"
@@ -49,7 +49,7 @@ private:
     {
  	if(is_connected && message->type==2)
 	{
-		auto reply = selfflow::msg::Common();
+		auto reply = self_flow::msg::Common();
 		reply.type=1;
 		reply.data=this->topic;
 		this->CommonNetPub->publish(reply); //publish topic name
@@ -114,7 +114,7 @@ public:
     void find_network()
     {
 	is_connected=0;
-	auto message = selfflow::msg::Common();
+	auto message = self_flow::msg::Common();
 	message.type=2;//request
 	message.data=AGENT_NAME;
 	this->CommonNetPub->publish(message);
