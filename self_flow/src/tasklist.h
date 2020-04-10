@@ -15,7 +15,7 @@ class task
 	virtual	UTILITY_T ability(){return 0;}
 };
 
-std::vector<task> tasklist; 		//Change this
+std::vector<std::shared_ptr<task>> tasklist;
 
 
 class autotask: public task
@@ -25,20 +25,21 @@ class autotask: public task
         {
           this->name=name;
           this->id=id;
-          tasklist.push_back(*this);
+	  std::shared_ptr<task> temp_ptr(this);
+          tasklist.push_back(temp_ptr);
         }
 };
 
 
-task * find_task(ID_T id)
+std::shared_ptr<task> find_task(ID_T id)
 {
     std::cout << "Looking for task" << std::endl;
-  for (std::vector<task>::iterator it=tasklist.begin(); it!=tasklist.end();it++)
+  for (auto it=tasklist.begin(); it!=tasklist.end();++it)
   {
-	if (it->id==id){return &(*it);}
+	if ((*it)->id==id){return *it;}
   }
   std::cout << "id error" << std::endl;
-  return &(tasklist[0]);
+  return tasklist[0];
 }
 
 
@@ -74,7 +75,7 @@ class print_tasks: public autotask
 	  std::cout << "executing print_tasks... " << std::endl;
 	  for (auto it : tasklist)
           {
-            std::cout << "task name: " << it.name << ", task id: " << it.id << std::endl;
+            std::cout << "task name: " << it->name << ", task id: " << it->id << std::endl;
           }
 	}
 }print_tasks_o;

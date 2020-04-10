@@ -5,7 +5,7 @@
 
 struct xtask
 {
-	task * task_;
+	std::shared_ptr<task> task_ptr;
 	TIME_T pub_time;
 	AGENT_ID_T publisher;
 	UTILITY_T utility;
@@ -23,13 +23,13 @@ class task_queue
 	void add_task(MY_MSG_TYPE message)
 	{
 		xtask temp;
-		temp.task_=find_task(message.task_id); //find related task
+		temp.task_ptr=find_task(message.task_id); //find related task
 //		temp.pub_time=message.stamp; 		??
 		temp.publisher=message.agent_id;
 		temp.instance_id=message.instance_id;
 		temp.status=1;
 		queue.push_back(temp);
-		std::cout << "added task: " << temp.task_->name << std::endl;
+		std::cout << "added task: " << temp.task_ptr->name << std::endl;
 		this->update();
 	}
 
@@ -38,7 +38,7 @@ class task_queue
 		UTILITY_T max=0;
 		for (auto it : queue)
 		{
-			it.utility= it.task_->ability();// * confidence();// * interest();
+			it.utility= it.task_ptr->ability();// * confidence();// * interest();
 			if (it.utility >= max)
 			{
 				max=it.utility;
@@ -51,8 +51,7 @@ class task_queue
 	void update()
 	{
 		calc_utility();
-		best->task_->execute();
-		print_tasks_o.execute();
+		best->task_ptr->execute();
 	}
 };
 
