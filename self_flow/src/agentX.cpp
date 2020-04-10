@@ -7,7 +7,7 @@
 #include "self_flow/msg/common.hpp"
 
 
-#define UTILITY_T float
+#define UTILITY_T double
 #define TIME_T int
 #define AGENT_ID_T uint32_t
 #define MY_MSG_TYPE self_flow::msg::Taskdata
@@ -126,6 +126,7 @@ public:
 	NetPub = this->create_publisher<MY_MSG_TYPE>(topic, 1);
 	NetSub = this->create_subscription<MY_MSG_TYPE>(topic, 1, std::bind(&AgentNode::NetCallback, this, _1));
 	is_connected=1;
+	std::cout << "Connected to topic: " << this->topic << std::endl ;
     }
 
 };

@@ -10,12 +10,12 @@ class task
 	ID_T id;
 	virtual	void execute()
 	{
-	  std::cout << "Error, task " << this->name << "is empty" << std::endl;
+	  std::cout << "Error, task " << this->name << " is empty" << std::endl;
 	}
 	virtual	UTILITY_T ability(){return 0;}
 };
 
-std::vector<task> tasklist;
+std::vector<task> tasklist; 		//Change this
 
 
 class autotask: public task
@@ -32,11 +32,13 @@ class autotask: public task
 
 task * find_task(ID_T id)
 {
-  for (auto it : tasklist)
+    std::cout << "Looking for task" << std::endl;
+  for (std::vector<task>::iterator it=tasklist.begin(); it!=tasklist.end();it++)
   {
-	if (it.id==id){return &it;}
+	if (it->id==id){return &(*it);}
   }
-  return 0;
+  std::cout << "id error" << std::endl;
+  return &(tasklist[0]);
 }
 
 
@@ -44,6 +46,13 @@ task * find_task(ID_T id)
 //////////////////////////////////////////////
 //		TASKS
 //////////////////////////////////////////////
+
+
+class empty_task: public autotask
+{
+  public:
+        empty_task() : autotask("empty_task",666){}
+}empty_task_o;
 
 
 
@@ -55,31 +64,28 @@ class find_ball: public autotask
 }find_ball_o;
 
 
-
 class print_tasks: public autotask
 {
   public:
         print_tasks() : autotask("print_tasks",101){}
-	void execute();
-}print_tasks;
+	UTILITY_T ability(){return .8;}
+	void execute()
+	{
+	  std::cout << "executing print_tasks... " << std::endl;
+	  for (auto it : tasklist)
+          {
+            std::cout << "task name: " << it.name << ", task id: " << it.id << std::endl;
+          }
+	}
+}print_tasks_o;
 
 
 
 ///////////////////////////////////////////
-//		IMPLEMENTATIONS 		(move to another file)
+//		IMPLEMENTATIONS 		(move to another file?)
 //////////////////////////////////////////
 
 
-
-void print_tasks::execute()
-{
-	for (auto it : tasklist)
-          {
-            std::cout << "task name: " << it.name << ", task id: " << it.id;
-          }
-}
-
-//void print_tasks::ability(){return 0.5;}
 
 //task grab_ball = {"grab_ball",2};
 
