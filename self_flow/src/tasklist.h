@@ -75,10 +75,18 @@ class print_tasks: public autotask
 	  std::cout << "executing print_tasks... " << std::endl;
 	  for (auto it : tasklist)
           {
-            std::cout << "task name: " << it->name << ", task id: " << it->id << std::endl;
+            std::cout << "task name: " << it->name << ", task id: " << it->id << ", ability: " << it->ability() <<std::endl;
           }
 	}
 }print_tasks_o;
+
+class show_tasks: public autotask
+{
+  public:
+        show_tasks() : autotask("show_active_tasks",102){}
+        UTILITY_T ability(){return .8;}
+	void execute(){}
+}show_tasks_o;
 
 
 

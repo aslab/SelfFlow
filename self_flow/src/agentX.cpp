@@ -13,7 +13,6 @@
 #define MY_MSG_TYPE self_flow::msg::Taskdata
 #define MY_PUB_MSG_TYPE self_flow::msg::Common
 #define ID_T uint32_t
-#define AGENT_NAME "test"
 #define COMMON_TOPIC "/commontopic"
 
 
@@ -29,7 +28,7 @@ class AgentNode : public rclcpp::Node
 {
 private:
 
-    bool timer_active;
+    bool timer_active=1;
     bool is_connected;
 
     std::string topic;
@@ -43,6 +42,15 @@ private:
     rclcpp::Publisher<MY_MSG_TYPE>::SharedPtr NetPub;
     rclcpp::Publisher<MY_PUB_MSG_TYPE>::SharedPtr CommonNetPub;
     rclcpp::TimerBase::SharedPtr timer;
+
+
+   void init()
+   {
+        CommonNetPub = this->create_publisher<MY_PUB_MSG_TYPE>(COMMON_TOPIC, 1);
+        CommonNetSub = this->create_subscription<MY_PUB_MSG_TYPE>(COMMON_TOPIC, 1, std::bind(&AgentNode::CommonNetCallback, this, _1));
+        timer = this->create_wall_timer(5s, std::bind(&AgentNode::timerCallback, this));
+	find_network();
+   }
 
 
     void CommonNetCallback(const MY_PUB_MSG_TYPE::SharedPtr message)
@@ -74,8 +82,8 @@ private:
         {
 		if(!is_connected)
                 {
-        	        topic= std::string(AGENT_NAME);
-			topic+= "'s topic";
+        	        topic= std::string(nodeName);
+			topic+= "_topic";
         	        this->connect();
 			timer_active=0;
                 }
@@ -84,13 +92,17 @@ private:
 
 
 public:
-    AgentNode(): Node(nodeName())
+    AgentNode(): Node(nodeName)
     {
-	CommonNetPub = this->create_publisher<MY_PUB_MSG_TYPE>(COMMON_TOPIC, 1);
-	CommonNetSub = this->create_subscription<MY_PUB_MSG_TYPE>(COMMON_TOPIC, 1, std::bind(&AgentNode::CommonNetCallback, this, _1));
-        timer = this->create_wall_timer(10s, std::bind(&AgentNode::timerCallback, this));
+	init();
     }
 
+
+    AgentNode(std::string name): Node(name)
+    {
+	nodeName=name;
+	init();
+    }
 
     unsigned int time() const
     {
@@ -100,15 +112,8 @@ public:
     }
 
 
-    std::string nodeName()
-    {
-        std::string nodeName(AGENT_NAME);
-//        std::string randId=;
-//        nodeName+=randId;
-        return nodeName;
-    }
 
-
+    std::string nodeName="test_agent";
 
 
     void find_network()
@@ -116,8 +121,9 @@ public:
 	is_connected=0;
 	auto message = self_flow::msg::Common();
 	message.type=2;//request
-	message.data=AGENT_NAME;
+	message.data=nodeName;
 	this->CommonNetPub->publish(message);
+	timer = this->create_wall_timer(10s, std::bind(&AgentNode::timerCallback, this));
 	timer_active=1;
     }
 

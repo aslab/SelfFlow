@@ -1,5 +1,4 @@
 #include "tasklist.h"
-//#include "implementation.cpp"
 #include "confidence.cpp"
 
 
@@ -51,9 +50,20 @@ class task_queue
 	void update()
 	{
 		calc_utility();
+		if(best->task_ptr->id==102){this->show_active_tasks();} //debug task
 		best->task_ptr->execute();
 	}
+
+	void show_active_tasks()
+	{
+	  std::cout << "executing show_active_tasks... " << std::endl;
+          for (auto it : queue)
+          {
+          	std::cout << "task name: " << it.task_ptr->name << ", task id: " << it.task_ptr->id <<", utility: "<< it.utility << std::endl;
+	  }
+	}
 };
+
 
 
 
