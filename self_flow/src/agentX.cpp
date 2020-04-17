@@ -13,7 +13,7 @@
 #define MY_MSG_TYPE self_flow::msg::Taskdata
 #define MY_PUB_MSG_TYPE self_flow::msg::Common
 #define ID_T uint32_t
-#define COMMON_TOPIC "/commontopic"
+#define COMMON_TOPIC "testnet"
 
 
 #include "tasklist.h"
@@ -31,7 +31,9 @@ private:
     bool timer_active=1;
     bool is_connected;
 
-    std::string topic;
+    std::string topic="DefaultTopic";
+    std::string nodeName;
+    size_t count_;
 
     std::vector<MY_MSG_TYPE> public_task_register;
 
@@ -44,22 +46,13 @@ private:
     rclcpp::TimerBase::SharedPtr timer;
 
 
-   void init()
-   {
-        CommonNetPub = this->create_publisher<MY_PUB_MSG_TYPE>(COMMON_TOPIC, 1);
-        CommonNetSub = this->create_subscription<MY_PUB_MSG_TYPE>(COMMON_TOPIC, 1, std::bind(&AgentNode::CommonNetCallback, this, _1));
-        timer = this->create_wall_timer(5s, std::bind(&AgentNode::timerCallback, this));
-	find_network();
-   }
-
-
     void CommonNetCallback(const MY_PUB_MSG_TYPE::SharedPtr message)
     {
  	if(is_connected && message->type==2)
 	{
 		auto reply = self_flow::msg::Common();
 		reply.type=1;
-		reply.data=this->topic;
+		reply.data="test";
 		this->CommonNetPub->publish(reply); //publish topic name
 	}
 	if(!is_connected&&message->type==1)
@@ -73,36 +66,33 @@ private:
     void NetCallback(const MY_MSG_TYPE::SharedPtr msg)
     {
 	public_task_register.push_back(*msg); //store msg
-	tasks.add_task(*msg);
+	tasks.store_task(*msg);
     }
 
     void timerCallback()
     {
-	if(timer_active)
-        {
-		if(!is_connected)
-                {
-        	        topic= std::string(nodeName);
+	if(!is_connected)
+	{
+		if (count_<10)find_network();
+	        else
+		{
+			topic= std::string(nodeName);
 			topic+= "_topic";
-        	        this->connect();
-			timer_active=0;
-                }
+       	        	this->connect();
+		}
 	}
     }
 
 
 public:
-    AgentNode(): Node(nodeName)
-    {
-	init();
-    }
-
-
-    AgentNode(std::string name): Node(name)
+    AgentNode(std::string name): Node(name), count_(0)
     {
 	nodeName=name;
-	init();
+        CommonNetPub = this->create_publisher<MY_PUB_MSG_TYPE>(COMMON_TOPIC, 1);
+        CommonNetSub = this->create_subscription<MY_PUB_MSG_TYPE>(COMMON_TOPIC, 1, std::bind(&AgentNode::CommonNetCallback, this, _1));
+        timer = this->create_wall_timer(1s, std::bind(&AgentNode::timerCallback, this));
     }
+
 
     unsigned int time() const
     {
@@ -112,19 +102,14 @@ public:
     }
 
 
-
-    std::string nodeName="test_agent";
-
-
     void find_network()
     {
-	is_connected=0;
 	auto message = self_flow::msg::Common();
-	message.type=2;//request
-	message.data=nodeName;
-	this->CommonNetPub->publish(message);
-	timer = this->create_wall_timer(10s, std::bind(&AgentNode::timerCallback, this));
-	timer_active=1;
+        message.data = nodeName; // + std::to_string(this->count_++);
+	message.type=2; //request
+        RCLCPP_INFO(this->get_logger(), "Looking for other agents...");
+	this->count_++;
+        this->CommonNetPub->publish(message);
     }
 
     void connect()

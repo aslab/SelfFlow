@@ -36,6 +36,12 @@ add_executable(agent_test
  src/test.cpp
 )
 
+target_include_directories(agent_test PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+
+
+
 ament_target_dependencies(agent_test
  "rclcpp"
 )
@@ -51,7 +57,8 @@ foreach(typesupport_impl ${typesupport_impls})
 endforeach()
 
 install(TARGETS agent_test
-  DESTINATION bin)
+  EXPORT EXPORT_${PROJECT_NAME}
+  DESTINATION lib/${PROJECT_NAME})
 
 
 ament_package()
