@@ -1,24 +1,11 @@
 #include "tasklist.h"
-#include "confidence.cpp"
 
-
-struct xtask
-{
-	std::shared_ptr<task> task_ptr;
-	TIME_T pub_time;
-	UTILITY_T utility;
-	bool started=0;
-	uint32_t instance_id;
-};
 
 class task_queue
 {
-  private:
-	std::vector<xtask> queue;
-	xtask * best;
   public:
 
-	void store_task(MY_MSG_TYPE message)
+	void store_task(TASK_MSG_TYPE message)
 	{
 		xtask temp;
 		std::vector<xtask>::iterator it;
@@ -80,30 +67,6 @@ class task_queue
 	  }
 	}
 };
-
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-//	MY_MSG_TYPE read(ID_T instance)
-//	{
-//		int i=0;
-//		while(queue[i].instance_id!=instance){i++;}
-//		MY_MSG_TYPE message;
-//		message.type=5;
-//		message.task=queue[i].task.name;
-//		message.task_id=queue[i].task.id;
-//		message.instance_id=queue[i].instance_id;
-//		message.agent_id=queue[i]. ???
-//		return message;
-//	}
-
-
-
-
-
 
 
 

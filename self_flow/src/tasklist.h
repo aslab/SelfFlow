@@ -90,15 +90,4 @@ class show_tasks: public autotask
 
 
 
-///////////////////////////////////////////
-//		IMPLEMENTATIONS 		(move to another file?)
-//////////////////////////////////////////
-
-
-
-//task grab_ball = {"grab_ball",2};
-
-//task power_mgmt ={"power_mgmt",3};
-//etc
-
 #endif
