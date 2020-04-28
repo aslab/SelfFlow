@@ -1,4 +1,4 @@
 string id
 string agent
-double utility
+float64 utility
 

@@ -1,10 +1,12 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <cmath>
 
 #include "rclcpp/rclcpp.hpp"
-#include "self_flow/msg/taskdata.hpp"
-
+#include "self_flow/msg/task_auction.hpp"
+#include "self_flow/msg/task_bid.hpp"
+#include "self_flow/msg/task_assign.hpp"
 
 #define UTILITY_T double
 #define TIME_T int
@@ -17,15 +19,6 @@
 //Note: the assign_tasks topic will be replaced with a ros2 action server
 
 
-#define AUCTION_MSG_TYPE self_flow::msg::TaskAuction
-#define BID_MSG_TYPE self_flow::msg::TaskBid
-#define ASSIGN_MSG_TYPE self_flow::msg::TaskAssign
-
-
-#include "tasklist.h"
-#include "utility.cpp"
-
-
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
@@ -34,76 +27,114 @@ class AgentNode : public rclcpp::Node
 {
 private:
 
-    bool timer_active=1;
-    bool is_connected;
+    bool auction_pending=0;
+    std::string atid;
+    std::string best_bidder;
+    double best_bid=0.0;
 
-    std::string nodeName;
+    std::string my_name;
     size_t count_;
 
-//    std::vector<TASK_MSG_TYPE> public_task_log;
 
-    task_queue tasks;
 
-    rclcpp::Subscription<AUCTION_MSG_TYPE>::SharedPtr AuctionTopicSub;
-    rclcpp::Subscription<BID_MSG_TYPE>::SharedPtr BidTopicSub;
-    rclcpp::Subscription<ASSIGN_MSG_TYPE>::SharedPtr AssignTopicSub;
-    rclcpp::Publisher<AUCTION_MSG_TYPE>::SharedPtr AuctionTopicPub;
-    rclcpp::Publisher<BID_MSG_TYPE>::SharedPtr BidTopicPub;
-    rclcpp::Publisher<ASSIGN_MSG_TYPE>::SharedPtr AssignTopicPub;
+    rclcpp::Subscription<self_flow::msg::TaskAuction>::SharedPtr AuctionTopicSub;
+    rclcpp::Subscription<self_flow::msg::TaskBid>::SharedPtr BidTopicSub;
+    rclcpp::Subscription<self_flow::msg::TaskAssign>::SharedPtr AssignTopicSub;
+    rclcpp::Publisher<self_flow::msg::TaskAuction>::SharedPtr AuctionTopicPub;
+    rclcpp::Publisher<self_flow::msg::TaskBid>::SharedPtr BidTopicPub;
+    rclcpp::Publisher<self_flow::msg::TaskAssign>::SharedPtr AssignTopicPub;
 
     rclcpp::TimerBase::SharedPtr timer;
 
-    void AuctionTask()
+public:
+
+    AgentNode(std::string name): Node(name), count_(0)
     {
-//	publish task and wait 10 secs, AssignTask
+	my_name=name;
+        AuctionTopicPub = this->create_publisher<self_flow::msg::TaskAuction>(AUCTION_TOPIC, 1);
+        BidTopicPub = this->create_publisher<self_flow::msg::TaskBid>(BID_TOPIC, 1);
+        AssignTopicPub = this->create_publisher<self_flow::msg::TaskAssign>(ASSIGN_TOPIC, 1);
+        AuctionTopicSub = this->create_subscription<self_flow::msg::TaskAuction>(AUCTION_TOPIC, 1, std::bind(&AgentNode::AuctionCallback, this, _1));
+        BidTopicSub = this->create_subscription<self_flow::msg::TaskBid>(BID_TOPIC, 1, std::bind(&AgentNode::BidCallback, this, _1));
+        AssignTopicSub = this->create_subscription<self_flow::msg::TaskAssign>(ASSIGN_TOPIC, 1, std::bind(&AgentNode::AssignCallback, this, _1));
+        timer = this->create_wall_timer(10s, std::bind(&AgentNode::timerCallback, this));
     }
 
-    void BidTask()
+    void AuctionTask(std::string id, double w1, double w2, double w3, double w4)
     {
-//	publish utility
+	auto msg=self_flow::msg::TaskAuction();
+	msg.id=id;
+	msg.w1=w1;
+	msg.w2=w2;
+	msg.w3=w3;
+	msg.w4=w4;
+	auction_pending=1;
+	AuctionTopicPub->publish(msg);
+	RCLCPP_INFO(this->get_logger(), "Auctioned task");
     }
+
+    void BidTask(std::string id)
+    {
+	double result;
+//	result=std::pow(ability,w1);
+//	result=result*std::pow(closeness,w2);
+//        result=std::clamp(result,0.0,1.0);
+	auto msg=self_flow::msg::TaskBid();
+	msg.agent=my_name;
+	msg.id=id;
+	msg.utility=result;
+	BidTopicPub->publish(msg);
+    }
+
 
     void AssignTask()
     {
-//	rank all bidders and Assign to best
+	//check for myself first?
+	auto msg=self_flow::msg::TaskAssign();
+	msg.id=atid;
+	msg.agent=best_bidder;
+	AssignTopicPub->publish(msg);
     }
 
-    void AuctionCallback(const AUCTION_MSG_TYPE::SharedPtr msg)
+    void AuctionCallback(const self_flow::msg::TaskAuction::SharedPtr msg)
     {
-	tasks.store_task(*msg);
-//	if i can do it BidTask()
+//	if i can do it BidTask(id)
     }
 
-    void BidCallback(const BID_MSG_TYPE::SharedPtr msg)
-   {
-//	if my auction store
-   }
-
-    void AssignCallback(const ASSIGN_MSG_TYPE::SharedPtr msg)
+    void BidCallback(const self_flow::msg::TaskBid::SharedPtr msg)
     {
-//	if im chosen start task
+	if(auction_pending && msg->id==atid)
+	{
+		if(msg->utility>best_bid)
+		{
+			best_bid=msg->utility;
+			best_bidder=msg->agent;
+		}
+	}
+    }
+
+    void AssignCallback(const self_flow::msg::TaskAssign::SharedPtr msg)
+    {
+	if(msg->agent==my_name)
+	{
+//		start_action(msg.id);
+	}
     }
 
 
     void timerCallback()
     {
+	if(auction_pending)
+	{
+		auction_pending=0;
+		AssignTask();
+	}
     }
 
-
-public:
-    AgentNode(std::string name): Node(name), count_(0)
-    {
-	nodeName=name;
-        AuctionTopicPub = this->create_publisher<AUCTION_MSG_TYPE>(AUCTION_TOPIC, 1);
-        BidTopicPub = this->create_publisher<BID_MSG_TYPE>(BID_TOPIC, 1);
-        AssignTopicPub = this->create_publisher<ASSIGN_MSG_TYPE>(ASSIGN_TOPIC, 1);
-        AuctionTopicSub = this->create_subscription<AUCTION_MSG_TYPE>(AUCTION_TOPIC, 1, std::bind(&AgentNode::AuctionCallback, this, _1));
-        BidTopicSub = this->create_subscription<BID_MSG_TYPE>(BID_TOPIC, 1, std::bind(&AgentNode::BidCallback, this, _1));
-        AssignTopicSub = this->create_subscription<ASSIGN_MSG_TYPE>(ASSIGN_TOPIC, 1, std::bind(&AgentNode::AssignCallback, this, _1));
-        timer = this->create_wall_timer(1s, std::bind(&AgentNode::timerCallback, this));
-    }
-
-
+   double task()
+   {
+#include "tasklist.h"
+   }
 };
 
 
