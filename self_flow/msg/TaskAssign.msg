@@ -1,2 +1,2 @@
 string id
-string agent
+string agents

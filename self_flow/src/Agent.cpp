@@ -1,7 +1,6 @@
 #include <cstdint>
 #include <vector>
 #include <string>
-#include <cmath>
 
 #include "rclcpp/rclcpp.hpp"
 #include "self_flow/msg/task_auction.hpp"
@@ -31,7 +30,7 @@ private:
     std::string atid;
     std::string best_bidder;
     double best_bid=0.0;
-
+    bool busy=0;
     std::string my_name;
     size_t count_;
 
@@ -75,11 +74,7 @@ public:
 
     void BidTask(std::string id)
     {
-	double result;
-//	result=std::pow(ability,w1);
-//	result=result*std::pow(closeness,w2);
-//        result=std::clamp(result,0.0,1.0);
-	auto msg=self_flow::msg::TaskBid();
+	auto reply=self_flow::msg::TaskBid();
 	msg.agent=my_name;
 	msg.id=id;
 	msg.utility=result;
@@ -90,6 +85,7 @@ public:
     void AssignTask()
     {
 	//check for myself first?
+	//use action client instead
 	auto msg=self_flow::msg::TaskAssign();
 	msg.id=atid;
 	msg.agent=best_bidder;
@@ -98,7 +94,15 @@ public:
 
     void AuctionCallback(const self_flow::msg::TaskAuction::SharedPtr msg)
     {
-//	if i can do it BidTask(id)
+	double ut=map_sort(msg.id)->utility(msg.w1, msg.w2, msg.w3, msg.w4)
+	if(ut>0.1 && !busy)
+	{
+		auto reply=self_flow::msg::TaskBid();
+		reply.utility=ut;
+		reply.id=msg.id;
+		reply.agent=my_name;
+		BidTopicPub->publish(reply);
+	}
     }
 
     void BidCallback(const self_flow::msg::TaskBid::SharedPtr msg)
@@ -117,7 +121,9 @@ public:
     {
 	if(msg->agent==my_name)
 	{
-//		start_action(msg.id);
+		busy=1;
+		map_sort(msg.id)->execute; //replace with call to action server
+		busy=0;
 	}
     }
 
@@ -131,10 +137,6 @@ public:
 	}
     }
 
-   double task()
-   {
-#include "tasklist.h"
-   }
 };
 
 

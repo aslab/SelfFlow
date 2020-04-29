@@ -9,12 +9,11 @@ int main(int argc, char *argv[])
   rclcpp::executors::SingleThreadedExecutor executor;
   auto agent = std::make_shared<AgentNode>(argv[1]);
   executor.add_node(agent);
-  executor.spin();
 
 /////////////// MULTI NODE EXAMPLE
-//  auto other = std::make_shared<NODE>(ARGS);
-//  executor.add_node(other);
-//  executor.spin();
+//  auto action_server = std::make_shared<NODE>(ARGS);
+//  executor.add_node(action_server);
+  executor.spin();
 
   rclcpp::shutdown();
 
