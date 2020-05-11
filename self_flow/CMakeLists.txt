@@ -25,7 +25,6 @@ find_package(rmw_implementation_cmake REQUIRED)
 set(msg_files
   "msg/TaskAuction.msg"
   "msg/TaskBid.msg"
-  "msg/TaskAssign.msg"
 )
 
  rosidl_generate_interfaces(${PROJECT_NAME}
