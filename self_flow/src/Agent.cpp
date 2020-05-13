@@ -1,35 +1,38 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 #include "rclcpp/rclcpp.hpp"
-#include "self_flow/msg/task_auction.hpp"
-#include "self_flow/msg/task_bid.hpp"
-#include "self_flow/msg/task_assign.hpp"
+#include "self_flow/msg/task.hpp"
+#include "self_flow/msg/bid.hpp"
+#include "std_msgs/msg/string.hpp"
 
-#define UTILITY_T double
+#include "idle_task.cpp"
+#include "example_task.cpp"
+#include "example_task2.cpp"
 
-#define AUCTION_TOPIC "/self_flow/auction_task"
-#define BID_TOPIC "/self_flow/bid_task"
-//Note: the assign_tasks topic will be replaced with a ros2 action server
-
+#define AUCTION_TOPIC "/self_flow/task"
+#define BID_TOPIC "/self_flow/bid"
+#define COLLAB_TOPIC "/self_flow/collab"
 
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
 
-class AgentNode : public rclcpp::Node
+class AgentNode : public rclcpp::Node, public requisite
 {
 private:
 
     bool auction_pending=0;
-    std::string atid;
-    bool busy=0;
     std::string my_name;
 
-    std::unordered_map<std::string,*base_task> taskmap;
+    double curr_ut=0.0;
 
-    std::SharedPtr<base_task> current_task;
+    std::unordered_map<std::string, std::shared_ptr<base_task>> taskmap;
+
+
+    std::shared_ptr<base_task> current_task;
     std::vector<base_task> ostensible_tasks;
 
     rclcpp::Publisher<self_flow::msg::Task>::SharedPtr AuctionTopicPub;
@@ -41,6 +44,8 @@ private:
     rclcpp::TimerBase::SharedPtr timer1;
 //    rclcpp::TimerBase::SharedPtr timer2;
 
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr FeedbackTopicPub;
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr FeedbackTopicSub;
 
 
 public:
@@ -54,23 +59,34 @@ public:
         BidTopicSub = this->create_subscription<self_flow::msg::Bid>(BID_TOPIC, 1, std::bind(&AgentNode::BidCallback, this, _1));
         CollabTopicPub = this->create_publisher<self_flow::msg::Task>(COLLAB_TOPIC, 1);
         CollabTopicSub = this->create_subscription<self_flow::msg::Task>(COLLAB_TOPIC, 1, std::bind(&AgentNode::CollabCallback, this, _1));
-        timer1 = this->create_wall_timer(10s, std::bind(&AgentNode::timer1Callback, this));
 //      timer2 = this->create_wall_timer(1s, std::bind(&AgentNode::timer1sCallback, this));
 
+
+	std::shared_ptr<base_task> tmp_ptr=std::make_shared<example_task>(* new example_task);
+	taskmap["example_task"]=tmp_ptr;
+	std::shared_ptr<base_task> tmp_ptr2=std::make_shared<example_task2>(* new example_task2(this->req));
+	taskmap["example_task2"]=tmp_ptr2;
+
+
+	start_task("example_task2");
     }
 
 
 
+    void exe_req() override
+    {
+	start_task("example_task");
+    }
 
 //////////////////////ROS MSGS//////////////////////////////////////
 
     void CollabTask(std::string id){}
 
-    void CollabCallback(const self_flow::msg::TaskAuction::SharedPtr msg){}
+    void CollabCallback(const self_flow::msg::Task::SharedPtr msg){}
 
     void AuctionTask(std::string id)
     {
-	auto msg=self_flow::msg::TaskAuction();
+	auto msg=self_flow::msg::Task();
 	msg.id=id;
 	msg.agent=my_name;
 	msg.type=0; //0: petition 1: accepted 2:finished 3: failed
@@ -78,37 +94,85 @@ public:
 	RCLCPP_INFO(this->get_logger(), "Auctioned task");
     }
 
-    void AuctionCallback(const self_flow::msg::TaskAuction::SharedPtr msg)
+    void AuctionCallback(const self_flow::msg::Task::SharedPtr msg)
     {
-	if(!busy&&msg.type==0)
+	if(msg->type==0)
 	{
-		double ut=taskmap.at(msg.id)->utility();
-		auto reply=self_flow::msg::TaskBid();
+		double ut=taskmap.at(msg->id)->utility()-curr_ut;
+		auto reply=self_flow::msg::Bid();
 		reply.utility=ut;
-		reply.id=msg.id;
+		reply.id=msg->id;
 		reply.agent=my_name;
 		BidTopicPub->publish(reply);
 	}
-	if(msg.type==1) //delete or update task
+/*	if(msg->type==1) //delete or update task
 
-	if(msg.type==2) //update
+	if(msg->type==2) //update
 
-	if(msg.type==3) //??
-
+	if(msg->type==3) //??
+*/
     }
 
-    void BidCallback(const self_flow::msg::TaskBid::SharedPtr msg)
+    void BidCallback(const self_flow::msg::Bid::SharedPtr msg)
     {
-	//store all bids, if im the best bidder publish task accepted otherwise nothing for now(maybe wait and accept if 2nd?)
+	//store all bids, if im the best bidder accept task, publish task_accepted, otherwise nothing for now(maybe wait and accept if 2nd?)
 
-
+	start_task("msg->id");
 
     }
 
-//////////////////// TIMER CALLBACKS ////////////////////
+////////////////////CURRENT TASK FUNCTIONS //////////////
+
+
+    void start_task(std::string taskname)
+    {
+	current_task=taskmap.at(taskname);
+	if(&current_task)
+	{
+		curr_ut=current_task->utility();
+		current_task->init();
+		std::cout << "task init"<< std::endl;
+	        timer1 = this->create_wall_timer(1s, std::bind(&AgentNode::timer1Callback, this));
+	}
+	else
+	{
+		std::cout << "error" << std::endl;
+	}
+    }
+
+/*
+    FeedbackTopicPub = this->create_publisher<std_msgs::msg::String>(COLLAB_TOPIC, 1);
+    FeedbackTopicSub = this->create_subscription<std_msgs::msg::String>(COLLAB_TOPIC, 1, std::bind(&AgentNode::CollabCallback, this, _1));
+
+
+    void pub_feedback(std::string feedback)
+    {
+	auto message = std_msgs::msg::String();
+	message.data=feedback;
+    	FeedbackTopicPub->publish(message);
+    }
+
+    void feedback_cb(const std_msgs::msg::String::SharedPtr msg)
+    {
+    }
+*/
 
     void timer1Callback()
     {
+	int status=current_task->tick();
+
+	if (status==1)
+	{
+		std::string temp="Task in progress, id: ";
+		temp+=std::to_string(current_task->id);
+		RCLCPP_INFO(this->get_logger(), temp);
+	}
+	else if (status==2)
+	{
+		RCLCPP_INFO(this->get_logger(), "Task completed");
+		timer1->cancel();
+		complete();
+	}
     }
 
 };

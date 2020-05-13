@@ -1,13 +1,18 @@
 #include "base_task.cpp"
+#include "requisite.cpp"
 
-class example_task : public base_task
+class example_task2 : public base_task
 {
 private:
 
+  std::shared_ptr<requisite> parent;
   int count=0;
   int status=0;
+  bool (*requ)();
 
 public:
+
+  example_task2(bool (*req)() ){requ=req;}
 
   virtual void execute()
   {
@@ -16,7 +21,8 @@ public:
 
   virtual int RequisiteCheck() //check and start requisites for this task
   {
-	return 0;
+	if(requ())return 0;
+	else return -1;
   }
 
   double utility() override

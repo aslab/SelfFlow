@@ -20,11 +20,11 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(rmw_implementation_cmake REQUIRED)
-
+find_package(std_msgs REQUIRED)
 
 set(msg_files
-  "msg/TaskAuction.msg"
-  "msg/TaskBid.msg"
+  "msg/Task.msg"
+  "msg/Bid.msg"
 )
 
  rosidl_generate_interfaces(${PROJECT_NAME}
@@ -44,6 +44,7 @@ target_include_directories(agent_test PUBLIC
 
 ament_target_dependencies(agent_test
  "rclcpp"
+ "std_msgs"
 )
 
 get_default_rmw_implementation(rmw_implementation)

@@ -1,3 +1,3 @@
 string id
 string agent
-int type
+uint8 type
