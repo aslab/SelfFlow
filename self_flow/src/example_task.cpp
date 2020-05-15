@@ -1,4 +1,4 @@
-#include "base_task.cpp"
+#include "base_task.hpp"
 
 class example_task : public base_task
 {
@@ -9,12 +9,12 @@ private:
 
 public:
 
-  virtual void execute()
+  void execute() override
   {
 	status=1;
   }
 
-  virtual int RequisiteCheck() //check and start requisites for this task
+  int RequisiteCheck() override //check and start requisites for this task
   {
 	return 0;
   }
@@ -25,16 +25,18 @@ public:
 	return ut;
   }
 
-  virtual int tick()	//do task stuff and provide feedback
+  int tick() override	//do task stuff and provide feedback
   {
 	count++;
+	std::cout << "example1";
 	if(count==5){status=2;}
         return status;  //-1:error, 0: not started, 1:in process, 2:finished
   }
 
-//  void global_callback(int child id) override
-//  {
-//  }
+  std::string fb()
+  {
+	return "example_done";
+  };
 };
 
 

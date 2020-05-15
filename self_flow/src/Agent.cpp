@@ -15,12 +15,13 @@
 #define AUCTION_TOPIC "/self_flow/task"
 #define BID_TOPIC "/self_flow/bid"
 #define COLLAB_TOPIC "/self_flow/collab"
+#define FEEDBACK_TOPIC "/self_flow/feedback"
 
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
 
-class AgentNode : public rclcpp::Node, public requisite
+class AgentNode : public rclcpp::Node
 {
 private:
 
@@ -33,7 +34,10 @@ private:
 
 
     std::shared_ptr<base_task> current_task;
-    std::vector<base_task> ostensible_tasks;
+    std::vector<std::shared_ptr<base_task>> task_queue;
+
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr FeedbackPub;
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr FeedbackSub;
 
     rclcpp::Publisher<self_flow::msg::Task>::SharedPtr AuctionTopicPub;
     rclcpp::Subscription<self_flow::msg::Task>::SharedPtr AuctionTopicSub;
@@ -42,11 +46,7 @@ private:
     rclcpp::Publisher<self_flow::msg::Task>::SharedPtr CollabTopicPub;
     rclcpp::Subscription<self_flow::msg::Task>::SharedPtr CollabTopicSub;
     rclcpp::TimerBase::SharedPtr timer1;
-//    rclcpp::TimerBase::SharedPtr timer2;
-
-    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr FeedbackTopicPub;
-    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr FeedbackTopicSub;
-
+    rclcpp::TimerBase::SharedPtr timer0;
 
 public:
 
@@ -59,24 +59,22 @@ public:
         BidTopicSub = this->create_subscription<self_flow::msg::Bid>(BID_TOPIC, 1, std::bind(&AgentNode::BidCallback, this, _1));
         CollabTopicPub = this->create_publisher<self_flow::msg::Task>(COLLAB_TOPIC, 1);
         CollabTopicSub = this->create_subscription<self_flow::msg::Task>(COLLAB_TOPIC, 1, std::bind(&AgentNode::CollabCallback, this, _1));
-//      timer2 = this->create_wall_timer(1s, std::bind(&AgentNode::timer1sCallback, this));
+        FeedbackPub = this->create_publisher<std_msgs::msg::String>(FEEDBACK_TOPIC, 1);
+        FeedbackSub = this->create_subscription<std_msgs::msg::String>(FEEDBACK_TOPIC, 1, std::bind(&AgentNode::feedback_cb, this, _1));
+        timer0 = this->create_wall_timer(5s, std::bind(&AgentNode::timer0Callback, this));
 
 
 	std::shared_ptr<base_task> tmp_ptr=std::make_shared<example_task>(* new example_task);
 	taskmap["example_task"]=tmp_ptr;
-	std::shared_ptr<base_task> tmp_ptr2=std::make_shared<example_task2>(* new example_task2(this->req));
+	std::shared_ptr<base_task> tmp_ptr2=std::make_shared<example_task2>(* new example_task2);
 	taskmap["example_task2"]=tmp_ptr2;
 
 
-	start_task("example_task2");
+	add_task("example_task2");
+	std::cout << "task added"<<std::endl;
     }
 
 
-
-    void exe_req() override
-    {
-	start_task("example_task");
-    }
 
 //////////////////////ROS MSGS//////////////////////////////////////
 
@@ -85,7 +83,7 @@ public:
     void CollabCallback(const self_flow::msg::Task::SharedPtr msg){}
 
     void AuctionTask(std::string id)
-    {
+   {
 	auto msg=self_flow::msg::Task();
 	msg.id=id;
 	msg.agent=my_name;
@@ -117,50 +115,70 @@ public:
     {
 	//store all bids, if im the best bidder accept task, publish task_accepted, otherwise nothing for now(maybe wait and accept if 2nd?)
 
-	start_task("msg->id");
+	add_task("msg->id");
 
     }
 
 ////////////////////CURRENT TASK FUNCTIONS //////////////
 
 
-    void start_task(std::string taskname)
+    void add_task(std::string taskname)
     {
-	current_task=taskmap.at(taskname);
-	if(&current_task)
+	auto temp=taskmap.at(taskname);
+	task_queue.push_back(temp);
+	if(temp->RequisiteCheck())
 	{
-		curr_ut=current_task->utility();
-		current_task->init();
-		std::cout << "task init"<< std::endl;
-	        timer1 = this->create_wall_timer(1s, std::bind(&AgentNode::timer1Callback, this));
-	}
-	else
-	{
-		std::cout << "error" << std::endl;
+		std::vector<std::string> reqlist = temp->RequisiteLoad();
+        	for (auto it : reqlist)
+		{
+			add_task(it);
+		}
 	}
     }
-
-/*
-    FeedbackTopicPub = this->create_publisher<std_msgs::msg::String>(COLLAB_TOPIC, 1);
-    FeedbackTopicSub = this->create_subscription<std_msgs::msg::String>(COLLAB_TOPIC, 1, std::bind(&AgentNode::CollabCallback, this, _1));
 
 
     void pub_feedback(std::string feedback)
     {
-	auto message = std_msgs::msg::String();
-	message.data=feedback;
-    	FeedbackTopicPub->publish(message);
+	if (!feedback.empty())
+	{
+		auto message = std_msgs::msg::String();
+		message.data=feedback;
+	    	FeedbackPub->publish(message);
+	}
     }
 
     void feedback_cb(const std_msgs::msg::String::SharedPtr msg)
     {
+	std::cout << "feedback: " << msg->data << std::endl;
+	Requisite[std::string(msg->data)]=1;
     }
-*/
+
+
+    void timer0Callback() //find best task and start it
+    {
+	double ut=0.0;
+	std::shared_ptr<base_task> temp_task;
+	for (auto it : task_queue)
+	{
+		if(!it->RequisiteCheck() && it->utility()>ut)
+		{
+			ut=it->utility();
+			temp_task=it;
+		}
+	}
+	if(current_task!=temp_task)
+	{
+		std::cout<<"new task started"<<std::endl;
+		current_task=temp_task;
+		current_task->init();
+	        timer1 = this->create_wall_timer(1s, std::bind(&AgentNode::timer1Callback, this));
+	}
+    }
+
 
     void timer1Callback()
     {
 	int status=current_task->tick();
-
 	if (status==1)
 	{
 		std::string temp="Task in progress, id: ";
@@ -170,8 +188,8 @@ public:
 	else if (status==2)
 	{
 		RCLCPP_INFO(this->get_logger(), "Task completed");
+		pub_feedback(std::string(current_task->fb()));
 		timer1->cancel();
-		complete();
 	}
     }
 

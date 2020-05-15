@@ -1,4 +1,4 @@
-#include "base_task.cpp"
+#include "base_task.hpp"
 
 class idle_task : public base_task
 {
@@ -28,9 +28,5 @@ public:
         return 1;  //-1:error, 0: not started, 1:in process, 2:finished
   }
 
-
-//  void global_callback(int child id) override
-//  {
-//  }
 };
 

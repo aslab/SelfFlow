@@ -1,5 +1,6 @@
 #ifndef _BASE_TASK_
 #define _BASE_TASK_
+#include "Requisite.hpp"
 
 class base_task
 {
@@ -21,10 +22,22 @@ public:
 	if(!RequisiteCheck()){this->execute();}
   }
 
-  virtual int RequisiteCheck() //check and start requisites for this task
+  virtual int RequisiteCheck() //return number of tasks required before this
   {
 	std::cout << "Misconstructed task" << std::endl;
 	return -1;
+  }
+
+  virtual std::vector<std::string> RequisiteLoad() //return number of tasks required before this
+  {
+	std::cout << "Misconstructed task" << std::endl;
+	std::vector<std::string> v;
+	return v;
+  }
+
+  virtual std::string fb()
+  {
+	return "";
   }
 
   virtual double utility()
@@ -39,13 +52,6 @@ public:
         return -1;  //-1:error, 0: not started, 1:in process, 2:finished
 
   }
-
-/*
-  virtual void global_callback(int child_id)
-  {
-	//update status depending on child id
-  }
-*/
 };
 
 #endif
