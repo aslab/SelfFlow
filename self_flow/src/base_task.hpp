@@ -9,6 +9,8 @@ public:
 
   int id=1;
 
+  bool is_collab=1;
+
   virtual void execute(){std::cout << "Misconstructed task" << std::endl;}
 
   void init()

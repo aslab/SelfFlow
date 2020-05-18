@@ -14,10 +14,19 @@ public:
 	status=1;
   }
 
-  int RequisiteCheck() override //check and start requisites for this task
+  int RequisiteCheck() override
   {
-	return 0;
+        if(Requisite.count("requisite_name")&&Requisite.at("requisite_name"))return 0;
+        else return 1;
   }
+
+  std::vector<std::string> RequisiteLoad() override
+  {
+        std::vector<std::string> v;
+        v.push_back(std::string("requisite_name"));
+        return v;
+  }
+
 
   double utility() override
   {
@@ -28,15 +37,14 @@ public:
   int tick() override	//do task stuff and provide feedback
   {
 	count++;
-	std::cout << "example1";
 	if(count==5){status=2;}
         return status;  //-1:error, 0: not started, 1:in process, 2:finished
   }
 
   std::string fb()
   {
-	return "example_done";
-  };
+	return "example_task";
+  }
 };
 
 
