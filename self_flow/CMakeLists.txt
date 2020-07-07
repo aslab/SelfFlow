@@ -25,6 +25,7 @@ find_package(std_msgs REQUIRED)
 set(msg_files
   "msg/Task.msg"
   "msg/Bid.msg"
+  "msg/Feedback.msg"
 )
 
  rosidl_generate_interfaces(${PROJECT_NAME}

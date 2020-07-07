@@ -16,21 +16,22 @@ public:
 
   int RequisiteCheck() override
   {
-        if(Requisite.count("requisite_name")&&Requisite.at("requisite_name"))return 0;
-        else return 1;
+//        if(TaskStatus.count("map")&&TaskStatus.at("map"))return 0;
+//        else return 1;
+	return 0;
   }
 
   std::vector<std::string> RequisiteLoad() override
   {
         std::vector<std::string> v;
-        v.push_back(std::string("requisite_name"));
+        v.push_back(std::string("map"));
         return v;
   }
 
 
   double utility() override
   {
-	double ut=0.8;
+	double ut=0.6;
 	return ut;
   }
 
@@ -43,7 +44,7 @@ public:
 
   std::string fb()
   {
-	return "example_task";
+	return "find_object";
   }
 };
 

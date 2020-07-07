@@ -6,15 +6,16 @@
 #include "rclcpp/rclcpp.hpp"
 #include "self_flow/msg/task.hpp"
 #include "self_flow/msg/bid.hpp"
-#include "std_msgs/msg/string.hpp"
+#include "self_flow/msg/feedback.hpp"
 
 #include "idle_task.cpp"
-#include "example_task.cpp"
+//#include "example_task.cpp"
 
 #define TASK_TOPIC "/self_flow/task"
 #define BID_TOPIC "/self_flow/bid"
 #define FEEDBACK_TOPIC "/self_flow/feedback"
 
+//#define LOCATION_T rclcpp::goal??
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
@@ -38,8 +39,8 @@ private:
     std::shared_ptr<base_task> current_task;
     std::vector<std::shared_ptr<base_task>> task_queue;
 
-    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr FeedbackPub;
-    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr FeedbackSub;
+    rclcpp::Publisher<self_flow::msg::Feedback>::SharedPtr FeedbackPub;
+    rclcpp::Subscription<self_flow::msg::Feedback>::SharedPtr FeedbackSub;
 
     rclcpp::Publisher<self_flow::msg::Task>::SharedPtr TaskPub;
     rclcpp::Subscription<self_flow::msg::Task>::SharedPtr TaskSub;
@@ -57,14 +58,16 @@ public:
         TaskSub = this->create_subscription<self_flow::msg::Task>(TASK_TOPIC, 1, std::bind(&AgentNode::TaskCallback, this, _1));
         BidTopicPub = this->create_publisher<self_flow::msg::Bid>(BID_TOPIC, 1);
         BidTopicSub = this->create_subscription<self_flow::msg::Bid>(BID_TOPIC, 1, std::bind(&AgentNode::BidCallback, this, _1));
-        FeedbackPub = this->create_publisher<std_msgs::msg::String>(FEEDBACK_TOPIC, 1);
-        FeedbackSub = this->create_subscription<std_msgs::msg::String>(FEEDBACK_TOPIC, 1, std::bind(&AgentNode::feedback_cb, this, _1));
+        FeedbackPub = this->create_publisher<self_flow::msg::Feedback>(FEEDBACK_TOPIC, 1);
+        FeedbackSub = this->create_subscription<self_flow::msg::Feedback>(FEEDBACK_TOPIC, 1, std::bind(&AgentNode::feedback_cb, this, _1));
         timer0 = this->create_wall_timer(5s, std::bind(&AgentNode::timer0Callback, this));
 
 /////////////TASK DEFINITION ///////////////////////////////////////
 
-	std::shared_ptr<base_task> tmp_ptr=std::make_shared<example_task>(* new example_task);
-	taskmap["example_task"]=tmp_ptr;
+	std::shared_ptr<base_task> tmp_ptr;
+
+//	tmp_ptr=std::make_shared<example_task>(* new example_task);
+//	taskmap["example_task"]=tmp_ptr;
 
 	tmp_ptr=std::make_shared<idle_task>(* new idle_task);
         taskmap["idle_task"]=tmp_ptr;
@@ -81,7 +84,7 @@ public:
         auto msg=self_flow::msg::Task();
         msg.id=id;
         msg.agent=my_name;
-        msg.type=4; //0: petition 1: accepted 2:finished 3: failed 4: collab
+        msg.type=4; //0: petition 1: accepted 2:finished 3: failed 4: collaborative
 	TaskPub->publish(msg);
 	std::string l="Collaborative task: ";
 	l+=id;
@@ -93,7 +96,7 @@ public:
 	auto msg=self_flow::msg::Task();
 	msg.id=id;
 	msg.agent=my_name;
-	msg.type=0; //0: petition 1: accepted 2:finished 3: failed 4: collab
+	msg.type=0; //0: petition 1: accepted 2:finished 3: failed
 	TaskPub->publish(msg);
 	std::string l="Auctioned task: ";
 	l+=id;
@@ -127,7 +130,7 @@ public:
     void BidCallback(const self_flow::msg::Bid::SharedPtr msg)
     {
 
-	if(msg->utility>best_delta) best_delta=msg->utility;
+	if(msg->utility > best_delta ) best_delta=msg->utility;
 
 
     }
@@ -144,27 +147,32 @@ public:
 		std::vector<std::string> reqlist = temp->RequisiteLoad();
         	for (auto it : reqlist)
 		{
-			if(temp->is_collab) CollabTask(it);
-			else AuctionTask(it);
+			if(TaskStatus.count(it)==0)	//making sure the task has not already been requested
+			{
+				pub_feedback(it, 0);
+				if(temp->is_collab) CollabTask(it);
+				else AuctionTask(it);
+			}
 		}
 	}
     }
 
 
-    void pub_feedback(std::string task_id)
+    void pub_feedback(std::string task_id,bool status)
     {
 	if (!task_id.empty())
 	{
-		auto message = std_msgs::msg::String();
-		message.data=task_id;
+		auto message = self_flow::msg::Feedback();
+		message.name=task_id;
+		message.status=status;
 	    	FeedbackPub->publish(message);
 	}
     }
 
-    void feedback_cb(const std_msgs::msg::String::SharedPtr msg)
+    void feedback_cb(const self_flow::msg::Feedback::SharedPtr msg)
     {
-	std::cout << "feedback: " << msg->data << std::endl;
-	Requisite[std::string(msg->data)]=1;
+	std::cout << "feedback: " << msg->name << std::endl;
+	TaskStatus[std::string(msg->name)]=msg->status;
     }
 
 
@@ -201,14 +209,14 @@ public:
 	int status=current_task->tick();
 	if (status==1)
 	{
-		std::string temp="Task in progress, id: ";
-		temp+=std::to_string(current_task->id);
+		std::string temp="Task in progress: ";
+		temp+=std::string(current_task->fb());
 		RCLCPP_INFO(this->get_logger(), temp);
 	}
 	else if (status==2)
 	{
 		RCLCPP_INFO(this->get_logger(), "Task completed");
-		pub_feedback(std::string(current_task->fb()));
+		pub_feedback(std::string(current_task->fb()),1);
 		timer1->cancel();
 	}
     }

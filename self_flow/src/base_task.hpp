@@ -1,6 +1,6 @@
 #ifndef _BASE_TASK_
 #define _BASE_TASK_
-#include "Requisite.hpp"
+#include "TaskStatus.hpp"
 
 class base_task
 {
