@@ -21,6 +21,7 @@ find_package(rclcpp REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(rmw_implementation_cmake REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 set(msg_files
   "msg/Task.msg"
@@ -46,6 +47,7 @@ target_include_directories(agent_test PUBLIC
 ament_target_dependencies(agent_test
  "rclcpp"
  "std_msgs"
+ "geometry_msgs"
 )
 
 get_default_rmw_implementation(rmw_implementation)

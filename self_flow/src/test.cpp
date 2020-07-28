@@ -1,11 +1,12 @@
+
 #include "Agent.cpp"
+#include "AgentPositionTracker.cpp"
 
 int main(int argc, char *argv[])
 {
 
   setvbuf(stdout, NULL, _IONBF, BUFSIZ);
   rclcpp::init(argc, argv);
-
 
   rclcpp::executors::SingleThreadedExecutor executor;
 
@@ -16,7 +17,9 @@ int main(int argc, char *argv[])
   }
 
   auto agent = std::make_shared<AgentNode>(argv[1]);
+  auto agent_tracker= std::make_shared<AgentPositionTracker>();
   executor.add_node(agent);
+  executor.add_node(agent_tracker);
 
 /////////////// MULTI NODE EXAMPLE
 //  auto action_server = std::make_shared<NODE>(ARGS);

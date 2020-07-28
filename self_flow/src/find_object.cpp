@@ -1,4 +1,5 @@
 #include "base_task.hpp"
+#include "position.hpp"
 
 class example_task : public base_task
 {
@@ -39,6 +40,7 @@ public:
   {
 	count++;
 	if(count==5){status=2;}
+        request_position(1.0,2.0,3.0,4.0);
         return status;  //-1:error, 0: not started, 1:in process, 2:finished
   }
 

@@ -1,29 +1,34 @@
-
+#include "rclcpp/rclcpp.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
+#include "position.hpp"
 class AgentPositionTracker : public rclcpp::Node
 {
   public:
     AgentPositionTracker()
-    : Node("name of the node") //generate node name
+    : Node("test_tracker") //generate node name
     {
 	publisher_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("/move_base_simple/goal", 10); //possible to change goal topic name?
-	timer_ = this->create_wall_timer(
-	000ms, std::bind(&MinimalPublisher::timer_callback, this));
+	timer_ = this->create_wall_timer(500ms, std::bind(&AgentPositionTracker::timer_callback, this));
     }
 
-  private:
     void timer_callback()
     {
-	auto message = geometry_msgs::msg::PoseStamped();
-	message.header.stamp.sec=0;
-	message.header.frame_id="odom"; //change?
-	message.pose.position.x= 1.0;
-	message.pose.position.y= 0.5;
-	message.pose.position.z= 0.0;
-	message.pose.orientation.w=1.0;
-	RCLCPP_INFO(this->get_logger(), "Requesting position x='%f', y='%f',  z='%f'",message.pose.position.x, message.pose.position.y, message.pose.position.z);
-	publisher_->publish(message);
+        if (req_pos.on)
+        {
+	  auto message = geometry_msgs::msg::PoseStamped();
+	  message.header.stamp.sec=0;
+	  message.header.frame_id="odom"; //change?
+	  message.pose.position.x= req_pos.x;
+	  message.pose.position.y= req_pos.y;
+	  message.pose.position.z= req_pos.z;
+	  message.pose.orientation.w= req_pos.w;
+	  req_pos.on=0;
+	  publisher_->publish(message);
+	  RCLCPP_INFO(this->get_logger(), "Requested position x='%f', y='%f',  z='%f'",message.pose.position.x, message.pose.position.y, message.pose.position.z);
+        }
     }
+  private:
+    rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr publisher_;
     rclcpp::TimerBase::SharedPtr timer_;
-    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
   };
 

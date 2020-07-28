@@ -11,11 +11,11 @@
 #include "idle_task.cpp"
 //#include "example_task.cpp"
 
+
 #define TASK_TOPIC "/self_flow/task"
 #define BID_TOPIC "/self_flow/bid"
 #define FEEDBACK_TOPIC "/self_flow/feedback"
 
-//#define LOCATION_T rclcpp::goal??
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
@@ -49,6 +49,7 @@ private:
     rclcpp::TimerBase::SharedPtr timer1;
     rclcpp::TimerBase::SharedPtr timer0;
 
+
 public:
 
     AgentNode(std::string name): Node(name)
@@ -73,6 +74,7 @@ public:
         taskmap["idle_task"]=tmp_ptr;
 
 	add_task("idle_task");
+
     }
 
 
