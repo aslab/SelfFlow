@@ -9,7 +9,7 @@
 #include "self_flow/msg/feedback.hpp"
 
 #include "idle_task.cpp"
-//#include "example_task.cpp"
+#include "find_object_task.cpp"
 
 
 #define TASK_TOPIC "/self_flow/task"
@@ -72,6 +72,10 @@ public:
 
 	tmp_ptr=std::make_shared<idle_task>(* new idle_task);
         taskmap["idle_task"]=tmp_ptr;
+        tmp_ptr=std::make_shared<find_object_task>(* new find_object_task);
+        taskmap["find_object_task"]=tmp_ptr;
+
+
 
 	add_task("idle_task");
 
@@ -107,6 +111,12 @@ public:
 
     void TaskCallback(const self_flow::msg::Task::SharedPtr msg)
     {
+	if (taskmap.find(msg->id)==taskmap.end())
+	{
+		std::cout << "bad task id" << std::endl;
+		return;
+	}
+
 	if(msg->type==0)
 	{
 		auction_task=msg->id;

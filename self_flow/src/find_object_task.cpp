@@ -1,7 +1,7 @@
 #include "base_task.hpp"
 #include "position.hpp"
 
-class example_task : public base_task
+class find_object_task : public base_task
 {
 private:
 
@@ -39,12 +39,12 @@ public:
   int tick() override	//do task stuff and provide feedback
   {
 	count++;
-	if(count==5){status=2;}
+//	if(count==5){status=2;}
         request_position(1.0,2.0,3.0,4.0);
         return status;  //-1:error, 0: not started, 1:in process, 2:finished
   }
 
-  std::string fb()
+  std::string fb() override
   {
 	return "find_object";
   }

@@ -7,7 +7,7 @@ public:
 
   void execute() override
   {
-	std::cout << "Idle Task started" << std::endl;
+//	std::cout << "Idle Task started" << std::endl;
   }
 
   int RequisiteCheck() override //check and start requisites for this task
@@ -25,8 +25,13 @@ public:
 
   int tick() override	//do task stuff and provide feedback
   {
-	std::cout << "Idling..."<<std::endl;
+//	std::cout << "Idling..."<<std::endl;
         return 1;  //-1:error, 0: not started, 1:in process, 2:finished
+  }
+
+  std::string fb() override
+  {
+	return "Idle";
   }
 
 };
