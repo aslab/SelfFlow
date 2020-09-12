@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
 
   rclcpp::executors::SingleThreadedExecutor executor;
 
-  if(argc!=2)
+  if(argc<2)
   {
 	std::cout << "Please input node name parameter"<<std::endl;
 	return 1;

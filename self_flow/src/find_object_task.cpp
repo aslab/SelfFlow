@@ -10,6 +10,12 @@ private:
 
 public:
 
+  std::string id() override
+  {
+	std::string name="find_object_task";
+	return name;
+  }
+
   void execute() override
   {
 	status=1;
@@ -44,10 +50,6 @@ public:
         return status;  //-1:error, 0: not started, 1:in process, 2:finished
   }
 
-  std::string fb() override
-  {
-	return "find_object";
-  }
 };
 
 

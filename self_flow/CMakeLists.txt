@@ -26,7 +26,6 @@ find_package(geometry_msgs REQUIRED)
 set(msg_files
   "msg/Task.msg"
   "msg/Bid.msg"
-  "msg/Feedback.msg"
 )
 
  rosidl_generate_interfaces(${PROJECT_NAME}
@@ -60,9 +59,12 @@ foreach(typesupport_impl ${typesupport_impls})
   )
 endforeach()
 
-install(TARGETS agent_test
+install( TARGETS agent_test
   EXPORT EXPORT_${PROJECT_NAME}
   DESTINATION lib/${PROJECT_NAME})
 
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME})
 
 ament_package()

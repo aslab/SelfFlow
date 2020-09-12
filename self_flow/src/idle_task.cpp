@@ -1,9 +1,14 @@
 #include "base_task.hpp"
 
-
 class idle_task : public base_task
 {
 public:
+
+  std::string id() override
+  {
+	std::string name="idle_task";
+	return name;
+  }
 
   void execute() override
   {
@@ -27,11 +32,6 @@ public:
   {
 //	std::cout << "Idling..."<<std::endl;
         return 1;  //-1:error, 0: not started, 1:in process, 2:finished
-  }
-
-  std::string fb() override
-  {
-	return "Idle";
   }
 
 };

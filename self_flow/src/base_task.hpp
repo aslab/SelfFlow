@@ -7,7 +7,11 @@ class base_task
 
 public:
 
-  int id=1;
+  virtual std::string id()
+  {
+	std::string name="base_task";
+	return name;
+  }
 
   bool is_collab=1;
 
@@ -18,28 +22,17 @@ public:
 	if(!RequisiteCheck()){this->execute();}
   }
 
-  void init(int id) //
-  {
-	this->id=id;
-	if(!RequisiteCheck()){this->execute();}
-  }
-
   virtual int RequisiteCheck() //return number of tasks required before this
   {
 	std::cout << "Misconstructed task" << std::endl;
 	return -1;
   }
 
-  virtual std::vector<std::string> RequisiteLoad() //return number of tasks required before this
+  virtual std::vector<std::string> RequisiteLoad() //return required tasks
   {
 	std::cout << "Misconstructed task" << std::endl;
 	std::vector<std::string> v;
 	return v;
-  }
-
-  virtual std::string fb()
-  {
-	return "";
   }
 
   virtual double utility()
