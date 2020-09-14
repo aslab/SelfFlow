@@ -47,6 +47,12 @@ public:
         return -1;  //-1:error, 0: not started, 1:in process, 2:finished
 
   }
+
+  virtual int tick_rate() //refresh rate in s
+  {
+	return 5;
+  }
+
 };
 
 #endif

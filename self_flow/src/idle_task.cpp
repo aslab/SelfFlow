@@ -34,5 +34,10 @@ public:
         return 1;  //-1:error, 0: not started, 1:in process, 2:finished
   }
 
+  int tick_rate() override
+  {
+	return 30;
+  }
+
 };
 

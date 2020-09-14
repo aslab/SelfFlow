@@ -54,7 +54,7 @@ public:
         TaskSub = this->create_subscription<self_flow::msg::Task>(TASK_TOPIC, 1, std::bind(&AgentNode::TaskCallback, this, _1));
         BidTopicPub = this->create_publisher<self_flow::msg::Bid>(BID_TOPIC, 1);
         BidTopicSub = this->create_subscription<self_flow::msg::Bid>(BID_TOPIC, 1, std::bind(&AgentNode::BidCallback, this, _1));
-        timer0 = this->create_wall_timer(5s, std::bind(&AgentNode::timer0Callback, this));
+        timer0 = this->create_wall_timer(3s, std::bind(&AgentNode::timer0Callback, this));
 
 /////////////TASK DEFINITION ///////////////////////////////////////
 
@@ -62,6 +62,9 @@ public:
 
 //	tmp_ptr=std::make_shared<example_task>(* new example_task);
 //	taskmap["example_task"]=tmp_ptr;
+
+	RCLCPP_INFO(this->get_logger(), "Starting Agent...");
+
 
 	tmp_ptr=std::make_shared<idle_task>(* new idle_task);
         taskmap["idle_task"]=tmp_ptr;
@@ -121,6 +124,8 @@ public:
 		reply.id=msg->id;
 		reply.agent=my_name;
 		BidTopicPub->publish(reply);
+                timer0->cancel();
+		timer0 = this->create_wall_timer(3s, std::bind(&AgentNode::timer0Callback, this));
 	}
 
 	if(msg->status==4) //collab
@@ -134,7 +139,6 @@ public:
     {
 
 	if(msg->utility > best_delta ) best_delta=msg->utility;
-
 
     }
 
@@ -180,14 +184,47 @@ public:
 	}
     }
 
-/*   --------------------------------OBSOLETE------------------------------------
 
-    void feedback_cb(const self_flow::msg::Feedback::SharedPtr msg
+    void taskUpdate() //continuous check on task priorities
     {
-	std::cout << "feedback: " << msg->name << std::endl;
-	TaskStatus[std::string(msg->name)]=msg->status;
+	double ut=0.0;
+	std::shared_ptr<base_task> temp_task=current_task;
+	for (auto it : task_queue)	//find best task
+	{
+		if(TaskStatus.count(it->id()))
+		{
+			if(it->RequisiteCheck()==0 && it->utility()>ut && TaskStatus[it->id()]!=1)
+			{
+				ut=it->utility();
+				temp_task=it;
+			}
+		}
+
+		else
+		{
+			if(it->RequisiteCheck()==0 && it->utility()>ut)
+			{
+				ut=it->utility();
+				temp_task=it;
+			}
+		}
+
+	}
+	if(current_task!=temp_task) 	//start new task
+	{
+		current_task=temp_task;
+		current_task->init();
+	        timer1 = this->create_wall_timer(5s, std::bind(&AgentNode::timer1Callback, this));
+//	        timer1 = this->create_wall_timer(current_task->tick_rate(), std::bind(&AgentNode::timer1Callback, this)); //TO BE IMPLEMENTED
+		std::string l="New task started: ";
+		l+=current_task->id();
+		RCLCPP_INFO(this->get_logger(), l);
+
+	}
     }
-*/
+
+
+
 
     void timer0Callback()
     {
@@ -197,23 +234,8 @@ public:
 		auction_task="";
 	}
 
-	double ut=0.0;
-	std::shared_ptr<base_task> temp_task;
-	for (auto it : task_queue)	//find best task
-	{
-		if(!it->RequisiteCheck() && it->utility()>ut && TaskStatus[it->id()]==0)
-		{
-			ut=it->utility();
-			temp_task=it;
-		}
-	}
-	if(current_task!=temp_task) 	//start new task
-	{
-		std::cout<<"new task started"<<std::endl;
-		current_task=temp_task;
-		current_task->init();
-	        timer1 = this->create_wall_timer(1s, std::bind(&AgentNode::timer1Callback, this));
-	}
+	best_delta=0.0;
+	this->taskUpdate();
     }
 
 
