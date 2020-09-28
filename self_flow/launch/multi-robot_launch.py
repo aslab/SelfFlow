@@ -19,6 +19,7 @@ import os
 from ament_index_python.packages import get_package_prefix
 from ament_index_python.packages import get_package_share_directory
 from launch.conditions import IfCondition
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from nav2_common.launch import RewrittenYaml
 
 import launch.actions
@@ -70,7 +71,7 @@ def generate_launch_description():
 
     declare_params_file_cmd = launch.actions.DeclareLaunchArgument(
         'params',
-        default_value=[launch.substitutions.ThisLaunchFileDir(), '/my_params.yaml'],
+        default_value=[launch.substitutions.ThisLaunchFileDir(), '/default_params.yaml'],
         description='Full path to the ROS2 parameters file to use for all launched nodes')
 
     declare_rviz_config_file_cmd = launch.actions.DeclareLaunchArgument(
@@ -103,35 +104,9 @@ def generate_launch_description():
         'RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED', '1')
 
     # Specify the actions
-    start_gazebo_cmd = launch.actions.ExecuteProcess(
-        condition=IfCondition(use_simulation),
-        cmd=[simulator, '-s', 'libgazebo_ros_init.so', world],
-        cwd=[launch_dir], output='screen')
-
-  #  start_robot_state_publisher_cmd = launch.actions.ExecuteProcess(
-  #      cmd=[
-  #          os.path.join(
-  #              get_package_prefix('robot_state_publisher'),
-  #              'lib/robot_state_publisher/robot_state_publisher'),
-  #          os.path.join(
-  #              get_package_share_directory('turtlebot3_description'),
-  #              'urdf', 'turtlebot3_waffle.urdf'),
-  #          ['__params:=', configured_params]],
-  #      cwd=[launch_dir], output='screen')
-
-
-    start_robot_state_publisher_cmd = launch_ros.actions.Node(
-	    package='robot_state_publisher',
-            node_executable='robot_state_publisher',
-            node_name='robot_state_publisher',
-            node_namespace='agent0',
-	    output='screen',
-            parameters=[configured_params],
-
-
-            arguments=[ os.path.join(
-                get_package_share_directory('turtlebot3_description'),
-                'urdf', 'turtlebot3_waffle.urdf')])
+    start_robot_cmd = launch.actions.IncludeLaunchDescription(
+            PythonLaunchDescriptionSource([launch_dir, '/turtlebot3_agent.launch.py']),
+            launch_arguments={'use_sim_time': use_sim_time}.items())
 
     start_rviz_cmd = launch.actions.ExecuteProcess(
         cmd=[os.path.join(get_package_prefix('rviz2'), 'lib/rviz2/rviz2'),
@@ -151,15 +126,12 @@ def generate_launch_description():
             ['__params:=', configured_params]],
         cwd=[launch_dir], output='screen')
 
-    start_localizer_cmd = launch.actions.ExecuteProcess(
-        cmd=[
-            os.path.join(
-                get_package_prefix('nav2_amcl'),
-                'lib/nav2_amcl/amcl'),
-            ['__params:=', configured_params],
-	    ['__ns:=','test']],	
-        cwd=[launch_dir], output='screen')
-
+    start_localizer_cmd = launch_ros.actions.Node(
+        package='nav2_amcl',
+        node_executable='amcl',
+        node_name='amcl',
+        output='screen',
+        parameters=[configured_params])
 
     start_world_model_cmd = launch.actions.ExecuteProcess(
         cmd=[
@@ -227,10 +199,9 @@ def generate_launch_description():
     ld.add_action(stdout_linebuf_envvar)
 
     # Add any actions to launch in simulation (conditioned on 'use_simulation')
-    ld.add_action(start_gazebo_cmd)
+    ld.add_action(start_robot_cmd)
 
     # Add other nodes and processes we need
-    ld.add_action(start_robot_state_publisher_cmd)
     ld.add_action(start_rviz_cmd)
     ld.add_action(exit_event_handler)
 

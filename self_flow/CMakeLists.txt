@@ -33,17 +33,17 @@ set(msg_files
  )
 
 
-add_executable(agent_test
- src/test.cpp
+add_executable(start_agent
+ src/Start.cpp
 )
 
-target_include_directories(agent_test PUBLIC
+target_include_directories(start_agent PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
 
 
-ament_target_dependencies(agent_test
+ament_target_dependencies(start_agent
  "rclcpp"
  "std_msgs"
  "geometry_msgs"
@@ -54,17 +54,16 @@ find_package("${rmw_implementation}" REQUIRED)
 get_rmw_typesupport(typesupport_impls "${rmw_implementation}" LANGUAGE "cpp")
 
 foreach(typesupport_impl ${typesupport_impls})
-  rosidl_target_interfaces(agent_test
+  rosidl_target_interfaces(start_agent
     ${PROJECT_NAME} ${typesupport_impl}
   )
 endforeach()
 
-install( TARGETS agent_test
+install( TARGETS start_agent
   EXPORT EXPORT_${PROJECT_NAME}
   DESTINATION lib/${PROJECT_NAME})
 
-install(DIRECTORY
-  launch
+install(DIRECTORY launch worlds models rviz
   DESTINATION share/${PROJECT_NAME})
 
 ament_package()

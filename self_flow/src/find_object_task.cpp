@@ -1,5 +1,6 @@
 #include "base_task.hpp"
 #include "position.hpp"
+#include <stdlib.h>     /* srand, rand */
 
 class find_object_task : public base_task
 {
@@ -45,15 +46,21 @@ public:
   int tick() override	//do task stuff and provide feedback
   {
 	count++;
-//	if(count==5){status=2;}
-        request_position(1.0,2.0,3.0,4.0);
-        return status;  //-1:error, 0: not started, 1:in process, 2:finished
+	if(count==5)
+	{
+		count=0;
+//		status=2;
+		float x=(rand()%1000)/10.0 -50.0;
+		float y=(rand()%1000)/10.0 -50.0;
+		request_position(x,y,0.0,0.0);
+        }
+	return status;  //-1:error, 0: not started, 1:in process, 2:finished
   }
 
   int tick_rate() override
   {
 	return 20;
-  {
+  }
 
 };
 

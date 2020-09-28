@@ -107,6 +107,7 @@ public:
 
     void TaskCallback(const self_flow::msg::Task::SharedPtr msg)
     {
+
 	if (taskmap.find(msg->id)==taskmap.end())
 	{
 	        RCLCPP_INFO(this->get_logger(), "Bad task id");
@@ -117,6 +118,7 @@ public:
 
 	if(msg->status==0) //task auction
 	{
+		RCLCPP_INFO(this->get_logger(), "Task received");
 		auction_task=msg->id;
 		my_delta=taskmap.at(msg->id)->utility()-curr_ut;
 		auto reply=self_flow::msg::Bid();

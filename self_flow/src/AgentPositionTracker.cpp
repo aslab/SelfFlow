@@ -5,9 +5,9 @@ class AgentPositionTracker : public rclcpp::Node
 {
   public:
     AgentPositionTracker()
-    : Node("test_tracker") //generate node name
+    : Node("agent_tracker") //generate node name
     {
-	publisher_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("/move_base_simple/goal", 10); //possible to change goal topic name?
+	publisher_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("/move_base_simple/goal", 10);
 	timer_ = this->create_wall_timer(500ms, std::bind(&AgentPositionTracker::timer_callback, this));
     }
 
@@ -17,7 +17,7 @@ class AgentPositionTracker : public rclcpp::Node
         {
 	  auto message = geometry_msgs::msg::PoseStamped();
 	  message.header.stamp.sec=0;
-	  message.header.frame_id="odom"; //change?
+	  message.header.frame_id="odom";
 	  message.pose.position.x= req_pos.x;
 	  message.pose.position.y= req_pos.y;
 	  message.pose.position.z= req_pos.z;
