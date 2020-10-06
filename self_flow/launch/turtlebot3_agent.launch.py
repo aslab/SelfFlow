@@ -13,70 +13,75 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-# Authors: Darby Lim
 
 import os
 
+from ament_index_python.packages import get_package_prefix
 from ament_index_python.packages import get_package_share_directory
-from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import ThisLaunchFileDir
-from launch.actions import ExecuteProcess
-from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import Node
 
-TURTLEBOT3_MODEL = 'waffle' 
+import launch.actions
+import launch_ros.actions
+
+TURTLEBOT3_MODEL = 'waffle'
 
 def generate_launch_description():
-    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
-    
-    urdf_file_name = 'turtlebot3_' + TURTLEBOT3_MODEL + '.urdf'
-    print('urdf_file_name : {}'.format(urdf_file_name))
-    urdf = os.path.join(
-        get_package_share_directory('turtlebot3_description'),
-        'urdf',
-        urdf_file_name)
 
-    world = os.path.join(get_package_share_directory('self_flow'), 'worlds', 'test.model' )
-
-
-    return LaunchDescription([
-
-
-        ExecuteProcess(
-            cmd=['gazebo', '--verbose', world , '-s', 'libgazebo_ros_init.so'],
-            output='screen'),
-
-	DeclareLaunchArgument(
-        'namespace',
-        default_value='',
-        description='Namespace'),
-
- 
-        Node(
-            package='robot_state_publisher',
-            node_executable='robot_state_publisher',
-            node_name='robot_state_publisher',
-	    node_namespace= LaunchConfiguration('namespace'),
-            output='screen',
-            parameters=[{'use_sim_time': use_sim_time}],
-            arguments=[urdf]),
-
-#	Node(
-#	    package='self_flow',
-#	    node_executable='start_agent',
-#           node_name='agent_core',
-#	    node_namespace= LaunchConfiguration('namespace'),
-#	    output='screen',
-#	    parameters=[],
-#	    arguments=['Argument']),
 	
 
+	urdf_file_name = 'turtlebot3_' + TURTLEBOT3_MODEL + '.urdf'
+	print('urdf_file_name : {}'.format(urdf_file_name))
+	urdf = os.path.join(
+		get_package_share_directory('turtlebot3_description'),
+		'urdf',
+		urdf_file_name)
+
+	world = launch.substitutions.LaunchConfiguration('world')
+	namespace = launch.substitutions.LaunchConfiguration('namespace')
+	use_sim_time = launch.substitutions.LaunchConfiguration('use_sim_time', default='true')
 
 
+	declare_world_cmd = launch.actions.DeclareLaunchArgument(
+		'world',
+		default_value=os.path.join(get_package_share_directory('self_flow'),
+       		'worlds/house.model'),
+		description='Full path to world file to load')
+
+	declare_namespace_cmd = launch.actions.DeclareLaunchArgument(
+		'namespace',
+		default_value='',
+		description='Namespace')
 
 
-    ])
+	start_gazebo_cmd = launch.actions.ExecuteProcess(
+		cmd=['gazebo', world,'-s', 'libgazebo_ros_init.so'],
+        	output='screen')
+
+	start_robot_cmd= launch_ros.actions.Node(
+		package='robot_state_publisher',
+		node_executable='robot_state_publisher',
+		node_name='robot_state_publisher',
+		node_namespace= namespace,
+		output='screen',
+		parameters=[{'use_sim_time': use_sim_time}],
+		arguments=[urdf])
+
+	start_selfflow_cmd = launch_ros.actions.Node(
+		package='self_flow',
+		node_executable='start_agent',
+		node_name='agent_core',
+		node_namespace= namespace,
+		output='screen',
+		parameters=[],
+		arguments=['Arg'])
+
+	ld = launch.LaunchDescription()
+
+	ld.add_action(declare_world_cmd)
+	ld.add_action(declare_namespace_cmd)
+	ld.add_action(start_gazebo_cmd)
+	ld.add_action(start_robot_cmd)
+	#ld.add_action(start_selfflow_cmd)
+
+	return ld

@@ -63,7 +63,7 @@ install( TARGETS start_agent
   EXPORT EXPORT_${PROJECT_NAME}
   DESTINATION lib/${PROJECT_NAME})
 
-install(DIRECTORY launch worlds models rviz
+install(DIRECTORY launch worlds models rviz maps
   DESTINATION share/${PROJECT_NAME})
 
 ament_package()

@@ -13,7 +13,7 @@ public:
 	return name;
   }
 
-  bool is_collab=1;
+  bool is_collab=0;
 
   virtual void execute(){std::cout << "Misconstructed task" << std::endl;}
 

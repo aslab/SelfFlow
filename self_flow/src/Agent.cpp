@@ -8,6 +8,7 @@
 #include "self_flow/msg/bid.hpp"
 
 #include "idle_task.cpp"
+#include "home_task.cpp"
 #include "find_object_task.cpp"
 
 
@@ -68,6 +69,8 @@ public:
 
 	tmp_ptr=std::make_shared<idle_task>(* new idle_task);
         taskmap["idle_task"]=tmp_ptr;
+	tmp_ptr=std::make_shared<home_task>(* new home_task);
+        taskmap["home_task"]=tmp_ptr;
         tmp_ptr=std::make_shared<find_object_task>(* new find_object_task);
         taskmap["find_object_task"]=tmp_ptr;
 

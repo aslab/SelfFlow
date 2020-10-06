@@ -40,7 +40,7 @@ def generate_launch_description():
         'urdf',
         urdf_file_name)
 
-    world = os.path.join(get_package_share_directory('self_flow'), 'worlds', 'test_ns.model' )
+    world = os.path.join(get_package_share_directory('self_flow'), 'worlds', 'test.model' )
 
 
     return LaunchDescription([
@@ -65,14 +65,14 @@ def generate_launch_description():
             parameters=[{'use_sim_time': use_sim_time}],
             arguments=[urdf]),
 
-	Node(
-            package='self_flow',
-            node_executable='start_agent',
-          # node_name='agent_core',
-	    node_namespace= LaunchConfiguration('namespace'),
-            output='screen',
-            parameters=[],
-            arguments=['Argument']),
+#	Node(
+#	    package='self_flow',
+#	    node_executable='start_agent',
+#           node_name='agent_core',
+#	    node_namespace= LaunchConfiguration('namespace'),
+#	    output='screen',
+#	    parameters=[],
+#	    arguments=['Argument']),
 	
 
 
@@ -80,3 +80,4 @@ def generate_launch_description():
 
 
     ])
+

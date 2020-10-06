@@ -2,7 +2,7 @@
 #include "position.hpp"
 #include <stdlib.h>     /* srand, rand */
 
-class find_object_task : public base_task
+class home_task : public base_task
 {
 private:
 
@@ -13,45 +13,43 @@ public:
 
   std::string id() override
   {
-	std::string name="find_object_task";
+	std::string name="home_task";
 	return name;
   }
 
   void execute() override
   {
 	status=1;
+	request_position(2.0,0.0,0.0,1.0);
   }
 
   int RequisiteCheck() override
   {
-        if(TaskStatus.count("home_task")&&TaskStatus.at("home_task")==2)return 0;
-        else return 1;
+//        if(TaskStatus.count("map")&&TaskStatus.at("map"))return 0;
+//        else return 1;
+	return 0;
   }
 
   std::vector<std::string> RequisiteLoad() override
   {
         std::vector<std::string> v;
-        v.push_back(std::string("home_task"));
+        v.push_back(std::string("map"));
         return v;
   }
 
 
   double utility() override
   {
-	double ut=0.7;
+	double ut=0.6;
 	return ut;
   }
 
   int tick() override	//do task stuff and provide feedback
   {
 	count++;
-	if(count>=3)
+	if(count==5)
 	{
-		count=0;
-//		status=2;
-		float x=(rand()%40)/10.0 -2.0;
-		float y=(rand()%40)/10.0 -2.0;
-		request_position(x,y,0.0,1.0);
+		status=2;
         }
 	return status;  //-1:error, 0: not started, 1:in process, 2:finished
   }

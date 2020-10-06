@@ -19,8 +19,10 @@ import os
 from ament_index_python.packages import get_package_prefix
 from ament_index_python.packages import get_package_share_directory
 from launch.conditions import IfCondition
-from launch.launch_description_sources import PythonLaunchDescriptionSource
 from nav2_common.launch import RewrittenYaml
+
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+
 
 import launch.actions
 import launch_ros.actions
@@ -32,6 +34,7 @@ def generate_launch_description():
 
     # Create the launch configuration variables
     autostart = launch.substitutions.LaunchConfiguration('autostart')
+    use_amcl = launch.substitutions.LaunchConfiguration('use_amcl', default='true')
     bt_xml_file = launch.substitutions.LaunchConfiguration('bt')
     map_yaml_file = launch.substitutions.LaunchConfiguration('map')
     params_file = launch.substitutions.LaunchConfiguration('params')
@@ -39,7 +42,6 @@ def generate_launch_description():
     simulator = launch.substitutions.LaunchConfiguration('simulator')
     use_sim_time = launch.substitutions.LaunchConfiguration('use_sim_time')
     use_simulation = launch.substitutions.LaunchConfiguration('use_simulation')
-    world = launch.substitutions.LaunchConfiguration('world')
 
     namespace = launch.substitutions.LaunchConfiguration('namespace')
 
@@ -56,7 +58,7 @@ def generate_launch_description():
     # Declare the launch arguments
     declare_autostart_cmd = launch.actions.DeclareLaunchArgument(
         'autostart',
-        default_value='true',  #AUTOSTART
+        default_value='false',  #AUTOSTART
         description='Automatically startup the nav2 stack')
 
     declare_bt_xml_cmd = launch.actions.DeclareLaunchArgument(
@@ -68,7 +70,7 @@ def generate_launch_description():
 
     declare_map_yaml_cmd = launch.actions.DeclareLaunchArgument(
         'map',
-        default_value= os.path.join(get_package_share_directory('self_flow'), 'launch/turtlebot3_world.yaml'),
+        default_value= os.path.join(get_package_share_directory('self_flow'), 'maps/house.yaml'),
         description='Full path to map file to load')
 
     declare_params_file_cmd = launch.actions.DeclareLaunchArgument(
@@ -78,7 +80,7 @@ def generate_launch_description():
 
     declare_rviz_config_file_cmd = launch.actions.DeclareLaunchArgument(
         'rviz_config',
-        default_value='nav2_default_view.rviz',
+        default_value= os.path.join(get_package_share_directory('self_flow'), 'rviz/nav2_default_view.rviz'),
         description='Full path to the RVIZ config file to use')
 
     declare_simulator_cmd = launch.actions.DeclareLaunchArgument(
@@ -95,12 +97,6 @@ def generate_launch_description():
         'use_simulation',
         default_value='True',
         description='Whether to run in simulation')
-
-    declare_world_cmd = launch.actions.DeclareLaunchArgument(
-        'world',
-        default_value= os.path.join(get_package_share_directory('turtlebot3_gazebo'),
-                                   'worlds/turtlebot3_worlds/waffle.model'),
-        description='Full path to world file to load')
 
 
     declare_namespace_cmd = launch.actions.DeclareLaunchArgument(
@@ -151,7 +147,7 @@ def generate_launch_description():
     start_world_model_cmd = launch_ros.actions.Node(
         package='nav2_world_model',
         node_executable='world_model',
-	node_namespace= namespace, #???????????
+	#node_namespace= namespace, 
         output='screen',
         parameters=[configured_params])
 
@@ -210,6 +206,7 @@ def generate_launch_description():
     ld.add_action(declare_simulator_cmd)
     ld.add_action(declare_use_sim_time_cmd)
     ld.add_action(declare_use_simulation_cmd)
+    ld.add_action(declare_namespace_cmd)
 
     # Set environment variables
     ld.add_action(stdout_linebuf_envvar)
@@ -223,8 +220,11 @@ def generate_launch_description():
 
     # Add the actions to launch all of the navigation nodes
     ld.add_action(start_lifecycle_manager_cmd)
+ 
+#    if use_amcl=='true':
     ld.add_action(start_map_server_cmd)
     ld.add_action(start_localizer_cmd)
+    
     ld.add_action(start_world_model_cmd)
     ld.add_action(start_dwb_cmd)
     ld.add_action(start_planner_cmd)
