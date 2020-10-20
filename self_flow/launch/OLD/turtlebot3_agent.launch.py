@@ -74,7 +74,7 @@ def generate_launch_description():
 		node_namespace= namespace,
 		output='screen',
 		parameters=[],
-		arguments=['Arg'])
+		arguments=[])
 
 	ld = launch.LaunchDescription()
 

@@ -49,8 +49,8 @@ public:
 	{
 		count=0;
 //		status=2;
-		float x=(rand()%40)/10.0 -2.0;
-		float y=(rand()%40)/10.0 -2.0;
+		float x=(rand()%60)/10.0 -2.0;
+		float y=(rand()%60)/10.0 -2.0;
 		request_position(x,y,0.0,1.0);
         }
 	return status;  //-1:error, 0: not started, 1:in process, 2:finished
