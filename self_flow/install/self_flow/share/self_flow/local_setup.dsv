@@ -1,4 +1,0 @@
-source;share/self_flow/environment/ament_prefix_path.sh
-source;share/self_flow/environment/library_path.sh
-source;share/self_flow/environment/path.sh
-source;share/self_flow/environment/pythonpath.sh

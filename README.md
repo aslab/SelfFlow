@@ -31,4 +31,3 @@ Robot cooperation. Agent cooperation.
 
 ![SelfFlow logo](http://aslab.org/images/logos/SelfFlow_logo.png)
 
-test
