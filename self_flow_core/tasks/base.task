@@ -1,6 +1,6 @@
 #ifndef _BASE_TASK_
 #define _BASE_TASK_
-#include "TaskStatus.hpp"
+#include "../src/TaskStatus.hpp"
 
 class base_task
 {
@@ -13,7 +13,7 @@ public:
 	return name;
   }
 
-  bool is_collab=0;
+//  bool is_collab=0;
 
   virtual void execute(){std::cout << "Misconstructed task" << std::endl;}
 
@@ -22,7 +22,7 @@ public:
 	if(!RequisiteCheck()){this->execute();}
   }
 
-  virtual int RequisiteCheck() //return number of tasks required before this
+virtual int RequisiteCheck() //return number of tasks required before this
   {
 	std::cout << "Misconstructed task" << std::endl;
 	return -1;

@@ -1,7 +1,13 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
-#include "position.hpp"
+
+#define TOPICNAME /test_topic
+
+//Add support for storing location coordinates in a file
+
+
+
 class AgentPositionTracker : public rclcpp::Node
 {
   private:
@@ -26,10 +32,10 @@ class AgentPositionTracker : public rclcpp::Node
 	  auto message = geometry_msgs::msg::PoseStamped();
 	  message.header.stamp.sec=0;
 	  message.header.frame_id="map";
-	  message.pose.position.x= req_pos.x;
-	  message.pose.position.y= req_pos.y;
-	  message.pose.position.z= req_pos.z;
-	  message.pose.orientation.w= req_pos.w;
+//	  message.pose.position.x= x;
+//	  message.pose.position.y= y;
+//	  message.pose.position.z= z;
+//	  message.pose.orientation.w= w;
 	  NavPub->publish(message);
 	  RCLCPP_INFO(this->get_logger(), "Requested position x='%f', y='%f',  z='%f'",message.pose.position.x, message.pose.position.y, message.pose.position.z);
 	}

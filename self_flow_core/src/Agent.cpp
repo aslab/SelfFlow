@@ -5,17 +5,19 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "self_flow_core/msg/task.hpp"
-#include "self_flow_core/msg/bid.hpp"
 
-//#include "TaskList.hpp"
+
+#include "TaskList.hpp"
+#include "TaskStatus.hpp"
 
 
 #define TASK_TOPIC "/self_flow/task"
-#define BID_TOPIC "/self_flow/bid"
+#define ONTO_TOPIC "/self_flow/knowledge"
 
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
+
 
 class AgentNode : public rclcpp::Node
 {
@@ -25,23 +27,20 @@ private:
 
     double curr_ut=0.0;
 
+    std::unordered_map<std::string, std::shared_ptr<base_task>> task_list; //list of available tasks
 
-    double my_delta=0.0;
-    double best_delta=0.0;
-    std::string auction_task;
+    std::unordered_map<std::string, double> pending_tasks; //list of tasks to be evaluated
 
-    std::unordered_map<std::string, std::shared_ptr<base_task>> taskmap; //list of programmed tasks
+    std::unordered_map<std::string, std::shared_ptr<base_task>> task_queue;  //local task queue
 
+    std::shared_ptr<base_task> current_task; 	//active task
 
-    std::shared_ptr<base_task> current_task;
-    std::vector<std::shared_ptr<base_task>> task_queue;  //local task queue
-
-    rclcpp::Publisher<self_flow::msg::Task>::SharedPtr TaskPub;
-    rclcpp::Subscription<self_flow::msg::Task>::SharedPtr TaskSub;
-    rclcpp::Publisher<self_flow::msg::Bid>::SharedPtr BidTopicPub;
-    rclcpp::Subscription<self_flow::msg::Bid>::SharedPtr BidTopicSub;
-    rclcpp::TimerBase::SharedPtr timer1;
+    rclcpp::Publisher<self_flow_core::msg::Task>::SharedPtr TaskPub;
+    rclcpp::Subscription<self_flow_core::msg::Task>::SharedPtr TaskSub;
+    rclcpp::Publisher<self_flow_core::msg::Task>::SharedPtr OntoPub;
+    rclcpp::Subscription<self_flow_core::msg::Task>::SharedPtr OntoSub;
     rclcpp::TimerBase::SharedPtr timer0;
+    rclcpp::TimerBase::SharedPtr timer1;
 
 
 public:
@@ -49,109 +48,195 @@ public:
     AgentNode(std::string name): Node(name)
     {
 	my_name=name;
-        TaskPub = this->create_publisher<self_flow::msg::Task>(TASK_TOPIC, 1);
-        TaskSub = this->create_subscription<self_flow::msg::Task>(TASK_TOPIC, 1, std::bind(&AgentNode::TaskCallback, this, _1));
-        BidTopicPub = this->create_publisher<self_flow::msg::Bid>(BID_TOPIC, 1);
-        BidTopicSub = this->create_subscription<self_flow::msg::Bid>(BID_TOPIC, 1, std::bind(&AgentNode::BidCallback, this, _1));
-        timer0 = this->create_wall_timer(3s, std::bind(&AgentNode::timer0Callback, this));
+        TaskPub = this->create_publisher<self_flow_core::msg::Task>(TASK_TOPIC, 1);
+        TaskSub = this->create_subscription<self_flow_core::msg::Task>(TASK_TOPIC, 1, std::bind(&AgentNode::task_callback, this, _1));
+        OntoPub = this->create_publisher<self_flow_core::msg::Task>(ONTO_TOPIC, 1);
+        OntoSub = this->create_subscription<self_flow_core::msg::Task>(ONTO_TOPIC, 1, std::bind(&AgentNode::onto_callback, this, _1));
+        timer1 = this->create_wall_timer(5s, std::bind(&AgentNode::timer1Callback, this));
 
 /////////////TASK DEFINITION ///////////////////////////////////////
 
-	std::shared_ptr<base_task> tmp_ptr;
-
-//	tmp_ptr=std::make_shared<example_task>(* new example_task);
-//	taskmap["example_task"]=tmp_ptr;
 
 	RCLCPP_INFO(this->get_logger(), "Starting Agent...");
 
+//	tmp_ptr=std::make_shared<example_task>(* new example_task);
+//	task_list["example_task"]=tmp_ptr;
 
+//	load all tasks from this agent using ontology
+	while (1)
+	{
+	for (auto taskid : taskidlist)
+	{
+		knowledge_request(taskid, my_name);
+	}}
+
+	std::shared_ptr<base_task> tmp_ptr;
 	tmp_ptr=std::make_shared<idle_task>(* new idle_task);
-        taskmap["idle_task"]=tmp_ptr;
-	tmp_ptr=std::make_shared<home_task>(* new home_task);
-        taskmap["home_task"]=tmp_ptr;
-        tmp_ptr=std::make_shared<find_object_task>(* new find_object_task);
-        taskmap["find_object_task"]=tmp_ptr;
-
-
+        task_list["idle_task"]=tmp_ptr;
+//	  tmp_ptr=std::make_shared<home_task>(* new home_task);
+//        task_list["home_task"]=tmp_ptr;
+//        tmp_ptr=std::make_shared<find_object_task>(* new find_object_task);
+//        task_list["find_object_task"]=tmp_ptr;
 
 	add_task("idle_task");
-
+	this->task_update();
     }
 
 
 
-//////////////////////ROS MSGS//////////////////////////////////////
+//////////////////////TASK MSGS//////////////////////////////////////
 
-    void CollabTask(std::string id)
+    void pub_feedback(std::string id,uint8_t status)
     {
-        auto msg=self_flow::msg::Task();
-        msg.id=id;
-        msg.agent=my_name;
-        msg.status=4; //0: request 1: in progress 2:finished 3: failed 4: collaborative
-	TaskPub->publish(msg);
-	std::string l="New collaborative task: ";
-	l+=id;
+	auto message = self_flow_core::msg::Task();
+	message.id=id;
+	message.agent=my_name;
+	message.status=status;
+    	TaskPub->publish(message);
+	std::string l="Task status: ";
+	l+=status;
 	RCLCPP_INFO(this->get_logger(), l);
     }
 
     void AuctionTask(std::string id)
    {
-	auto msg=self_flow::msg::Task();
+	auto msg=self_flow_core::msg::Task();
 	msg.id=id;
 	msg.agent=my_name;
-	msg.status=0; //0: request 1: in progress 2:finished 3: failed 4: collaborative
+	msg.status=0; //0: request 1: auction response 2: collaboration request 3: individual request 10: in progress  11: finished 12: failed
 	TaskPub->publish(msg);
 	std::string l="Auctioned task: ";
 	l+=id;
 	RCLCPP_INFO(this->get_logger(), l);
     }
 
-    void TaskCallback(const self_flow::msg::Task::SharedPtr msg)
+    void task_callback(const self_flow_core::msg::Task::SharedPtr msg)
     {
-
-	if (taskmap.find(msg->id)==taskmap.end())
+	TaskStatus[msg->id]=msg->status;
+	if(msg->status==0 && task_list.count(msg->id)) //task auction received
 	{
-	        RCLCPP_INFO(this->get_logger(), "Bad task id");
-		return;
-	}
 
-        TaskStatus[std::string(msg->id)]=msg->status;
-
-	if(msg->status==0) //task auction
-	{
-		RCLCPP_INFO(this->get_logger(), "Task received");
-		auction_task=msg->id;
-		my_delta=taskmap.at(msg->id)->utility()-curr_ut;
-		auto reply=self_flow::msg::Bid();
-		reply.utility=my_delta;
-		reply.id=msg->id;
-		reply.agent=my_name;
-		BidTopicPub->publish(reply);
-                timer0->cancel();
+		//strip #
+		double ut=task_list.at(msg->id)->utility();
+		std::string l="Task received: ";
+		l+=msg->id;
+		l+=" , my utility: ";
+		l+=std::to_string(ut);
+		RCLCPP_INFO(this->get_logger(), l);
+		pending_tasks[msg->id]=double(ut);
+//		timer0->cancel(); //breaks for some reason
 		timer0 = this->create_wall_timer(3s, std::bind(&AgentNode::timer0Callback, this));
 	}
 
-	if(msg->status==4) //collab
+	else if(msg->status==1 && pending_tasks.at(msg->id) < msg->utility)	// If better bidder is found
+	{
+		RCLCPP_INFO(this->get_logger(), "Task declined: lower utility");
+		timer0->cancel();
+		pending_tasks.erase(msg->id);
+		return;
+	}
+
+//	else if (msg->status==2 && task_list.at(msg->id)->is_collab()) //task collaboration petition received
+//	{
+//		RCLCPP_INFO(this->get_logger(), "Collaborative Task accepted");
+//		add_task(msg->id);
+//	}
+
+	else if(msg->status==3 && msg->agent==my_name)  //individual request
 	{
 		add_task(msg->id);
 	}
 
+	else if(msg->status==10)//in progress
+	{
+		task_queue.erase(msg->id);
+		pending_tasks.erase(msg->id);
+	}
+	else if(msg->status==11)//finished
+	{
+		task_queue.erase(msg->id);
+		pending_tasks.erase(msg->id);
+	}
+	else if(msg->status==12)//failed
+	{
+		task_queue.erase(msg->id);
+		pending_tasks.erase(msg->id);
+	}
     }
 
-    void BidCallback(const self_flow::msg::Bid::SharedPtr msg)
+
+/////////////////////////ONTOLOGY INTERFACING///////////////////////////
+
+    void onto_callback(const self_flow_core::msg::Task::SharedPtr msg)
     {
 
-	if(msg->utility > best_delta ) best_delta=msg->utility;
+	if (msg->status==1)
+	{
+	if (msg->agent==my_name)
+	{
+	    std::string l="New task available: ";
+	    l+=msg->id;
+	    RCLCPP_INFO(this->get_logger(), l);
+	    std::shared_ptr<base_task> tmp_ptr;
+	    if(msg->id=="idle")
+	    {
+		tmp_ptr=std::make_shared<idle_task>(* new idle_task);
+        	task_list["idle"]=tmp_ptr;
+	    }
+	    else if(msg->id=="home")
+	    {
+		tmp_ptr=std::make_shared<home_task>(* new home_task);
+        	task_list["home"]=tmp_ptr;
+	    }
+	    else if(msg->id=="find_object")
+	    {
+		tmp_ptr=std::make_shared<find_object_task>(* new find_object_task);
+       		task_list["find_object"]=tmp_ptr;
+	    }
+//	    else if(msg->id=="GroundMapping")
+//	    {
+//		tmp_ptr=std::make_shared<GroundMapping_task>(* new GroundMapping_task);
+//        	task_list["GroundMapping_task"]=tmp_ptr;
+//	    }
+//	    else if(msg->id=="ObjectDetection")
+//	    {
+//		tmp_ptr=std::make_shared<ObjectDetection_task>(* new ObjectDetection_task);
+//        	task_list["ObjectDetection_task"]=tmp_ptr;
+//	    }
+	    else
+	    {
+		RCLCPP_ERROR(this->get_logger(), "Bad task id");
+	    }
+	    }
+	}
+
+//	else if(msg->id==help_required)
+//	{
+
+//	}
 
     }
 
-//////////////////// TASK FUNCTIONS //////////////
+
+   void knowledge_request(std::string ability,std::string agent)
+   {
+	auto msg=self_flow_core::msg::Task();
+        msg.id=ability;
+        msg.agent=agent;
+        msg.status=0; //0: request, 1: reply
+        OntoPub->publish(msg);
+        std::string l="Requesting knowledge to ontology: is ";
+        l+=agent;l+=" able to perform ";l+=ability;l+=" ?";
+        RCLCPP_INFO(this->get_logger(), l);
+   }
+
+
+/////////////////////////////////TASK MANAGEMENT//////////////////////////////////////////////
 
 
     void add_task(std::string taskname)
     {
-	auto temp=taskmap.at(taskname);
-	task_queue.push_back(temp);
+	auto temp=task_list.at(taskname);
 	if(temp->RequisiteCheck())
 	{
 		std::vector<std::string> reqlist = temp->RequisiteLoad();
@@ -159,56 +244,41 @@ public:
 		{
 			if(TaskStatus.count(it)==0)	//making sure the task has not already been requested
 			{
-			    if(temp->is_collab)
-			    {
-				CollabTask(it);
-				pub_feedback(it, 4);
-			    }
-			    else AuctionTask(it);
-			    {
 				AuctionTask(it);
-				pub_feedback(it, 1);
-			    }
+			}
+			else	//if task was already pending search for suitable agents
+			{
+//				ability_query[it]
+				knowledge_request(it, std::string("any"));
 			}
 		}
 	}
+	task_queue[taskname]=temp;
     }
 
 
-    void pub_feedback(std::string task_id,uint8_t status)
-    {
-	if (!task_id.empty())
-	{
-		auto message = self_flow::msg::Task();
-		message.id=task_id;
-		message.agent=my_name;
-		message.status=status;
-	    	TaskPub->publish(message);
-	}
-    }
-
-
-    void taskUpdate() //continuous check on task priorities
+    void task_update() //continuous check on task priorities
     {
 	double ut=0.0;
 	std::shared_ptr<base_task> temp_task=current_task;
-	for (auto it : task_queue)	//find best task
+	for (auto taskpair : task_queue)	//find best task
 	{
-		if(TaskStatus.count(it->id()))
+		auto task=taskpair.second;
+		if(TaskStatus.count(task->id()))
 		{
-			if(it->RequisiteCheck()==0 && it->utility()>ut && TaskStatus[it->id()]!=1)
+			if(task->RequisiteCheck()==0 && task->utility()>ut && TaskStatus[task->id()]!=10) //if task has no requisites to make, has bigger utility and has not already started
 			{
-				ut=it->utility();
-				temp_task=it;
+				ut=task->utility();
+				temp_task=task;
 			}
 		}
 
 		else
 		{
-			if(it->RequisiteCheck()==0 && it->utility()>ut)
+			if(task->RequisiteCheck()==0 && task->utility()>ut)
 			{
-				ut=it->utility();
-				temp_task=it;
+				ut=task->utility();
+				temp_task=task;
 			}
 		}
 
@@ -217,7 +287,8 @@ public:
 	{
 		current_task=temp_task;
 		current_task->init();
-	        timer1 = this->create_wall_timer(5s, std::bind(&AgentNode::timer1Callback, this));
+//		if temp_task->is_collab(){publish_status(temp_task->id)}
+	        timer1 = this->create_wall_timer(5s, std::bind(&AgentNode::timer1Callback, this)); //continuous status check
 //	        timer1 = this->create_wall_timer(current_task->tick_rate(), std::bind(&AgentNode::timer1Callback, this)); //TO BE IMPLEMENTED
 		std::string l="New task started: ";
 		l+=current_task->id();
@@ -226,43 +297,38 @@ public:
 	}
     }
 
-
-
-
-    void timer0Callback()
+    void timer0Callback() //timer for auction end
     {
-	if(!auction_task.empty()&&best_delta==my_delta) //add auctioned task
+	for(auto task : pending_tasks)
 	{
-		add_task(auction_task);
-		auction_task="";
-	}
+		if (task.second!=0.0)
+		{
+			add_task(task.first);
+		}
 
-	best_delta=0.0;
-	this->taskUpdate();
+	}
+	this->task_update();
     }
 
-
-    void timer1Callback()  //task tick
+    void timer1Callback()  //task status check
     {
 	int status=current_task->tick();
-	if (status==1)
-	{
-		std::string temp="Task in progress: ";
-		temp+=std::string(current_task->id());
-		pub_feedback(current_task->id(),1);
-		RCLCPP_INFO(this->get_logger(), temp);
-	}
-	else if (status==2)
+	if (status==11)
 	{
 		RCLCPP_INFO(this->get_logger(), "Task completed");
-		pub_feedback(current_task->id(),2);
+		pub_feedback(current_task->id(),11);
 		timer1->cancel();
 	}
-	else if (status==3)
+	else if (status==12)
 	{
 		RCLCPP_INFO(this->get_logger(), "Task failed");
-		pub_feedback(current_task->id(),0); //auto retry
+		pub_feedback(current_task->id(),12);
 		timer1->cancel();
+	}
+	else if (status==10)
+	{
+		RCLCPP_INFO(this->get_logger(), "Task in progress");
+		pub_feedback(current_task->id(),10);
 	}
     }
 
@@ -270,4 +336,13 @@ public:
 
 
 
+int main(int argc, char * argv[])
+{
+ rclcpp::init(argc, argv);
+
+  auto agent = std::make_shared<AgentNode>("agent_name");
+  rclcpp::spin(agent);
+
+  return 0;
+}
 

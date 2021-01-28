@@ -30,16 +30,19 @@
     <!-- http://Aslab/SelfFlow#hasAbility -->
 
     <owl:ObjectProperty rdf:about="http://Aslab/SelfFlow#hasAbility">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <owl:inverseOf rdf:resource="http://Aslab/SelfFlow#isAbledBy"/>
         <rdfs:domain rdf:resource="http://purl.org/ieee1872-owl/sumo-cora#Agent"/>
         <rdfs:range rdf:resource="http://Aslab/SelfFlow#Ability"/>
     </owl:ObjectProperty>
     
 
 
-    <!-- http://Aslab/SelfFlow#isAvailable -->
+    <!-- http://Aslab/SelfFlow#isAbledBy -->
 
-    <owl:ObjectProperty rdf:about="http://Aslab/SelfFlow#isAvailable"/>
+    <owl:ObjectProperty rdf:about="http://Aslab/SelfFlow#isAbledBy">
+        <rdfs:domain rdf:resource="http://Aslab/SelfFlow#Ability"/>
+        <rdfs:range rdf:resource="http://purl.org/ieee1872-owl/sumo-cora#Agent"/>
+    </owl:ObjectProperty>
     
 
 
@@ -54,15 +57,19 @@
     
 
 
-    <!-- http://Aslab/SelfFlow#Availability -->
+    <!-- http://Aslab/SelfFlow#isAvailable -->
 
-    <owl:DatatypeProperty rdf:about="http://Aslab/SelfFlow#Availability">
-        <rdfs:domain>
-            <owl:Restriction>
-                <owl:onProperty rdf:resource="http://Aslab/SelfFlow#isAvailable"/>
-                <owl:someValuesFrom rdf:resource="http://Aslab/SelfFlow#Ability"/>
-            </owl:Restriction>
-        </rdfs:domain>
+    <owl:DatatypeProperty rdf:about="http://Aslab/SelfFlow#isAvailable">
+        <rdfs:domain rdf:resource="http://Aslab/SelfFlow#Ability"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://Aslab/SelfFlow#isExclusive -->
+
+    <owl:DatatypeProperty rdf:about="http://Aslab/SelfFlow#isExclusive">
+        <rdfs:domain rdf:resource="http://Aslab/SelfFlow#Ability"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
     </owl:DatatypeProperty>
     
@@ -95,6 +102,14 @@
     
 
 
+    <!-- http://Aslab/SelfFlow#GroundMapping -->
+
+    <owl:Class rdf:about="http://Aslab/SelfFlow#GroundMapping">
+        <rdfs:subClassOf rdf:resource="http://Aslab/SelfFlow#Ability"/>
+    </owl:Class>
+    
+
+
     <!-- http://Aslab/SelfFlow#GroundNavigation -->
 
     <owl:Class rdf:about="http://Aslab/SelfFlow#GroundNavigation">
@@ -111,10 +126,28 @@
     
 
 
+    <!-- http://Aslab/SelfFlow#ObjectInteraction -->
+
+    <owl:Class rdf:about="http://Aslab/SelfFlow#ObjectInteraction">
+        <rdfs:subClassOf rdf:resource="http://Aslab/SelfFlow#Ability"/>
+    </owl:Class>
+    
+
+
     <!-- http://Aslab/SelfFlow#ObjectManipulation -->
 
     <owl:Class rdf:about="http://Aslab/SelfFlow#ObjectManipulation">
-        <rdfs:subClassOf rdf:resource="http://Aslab/SelfFlow#Ability"/>
+        <rdfs:subClassOf rdf:resource="http://Aslab/SelfFlow#ObjectDetection"/>
+        <rdfs:subClassOf rdf:resource="http://Aslab/SelfFlow#ObjectInteraction"/>
+    </owl:Class>
+    
+
+
+    <!-- http://Aslab/SelfFlow#SLAM -->
+
+    <owl:Class rdf:about="http://Aslab/SelfFlow#SLAM">
+        <rdfs:subClassOf rdf:resource="http://Aslab/SelfFlow#GroundMapping"/>
+        <rdfs:subClassOf rdf:resource="http://Aslab/SelfFlow#GroundNavigation"/>
     </owl:Class>
     
 
@@ -139,8 +172,17 @@
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AllDisjointClasses"/>
         <owl:members rdf:parseType="Collection">
             <rdf:Description rdf:about="http://Aslab/SelfFlow#AirNavigation"/>
+            <rdf:Description rdf:about="http://Aslab/SelfFlow#GroundMapping"/>
             <rdf:Description rdf:about="http://Aslab/SelfFlow#GroundNavigation"/>
             <rdf:Description rdf:about="http://Aslab/SelfFlow#ObjectDetection"/>
+        </owl:members>
+    </rdf:Description>
+    <rdf:Description>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AllDisjointClasses"/>
+        <owl:members rdf:parseType="Collection">
+            <rdf:Description rdf:about="http://Aslab/SelfFlow#AirNavigation"/>
+            <rdf:Description rdf:about="http://Aslab/SelfFlow#GroundMapping"/>
+            <rdf:Description rdf:about="http://Aslab/SelfFlow#GroundNavigation"/>
             <rdf:Description rdf:about="http://Aslab/SelfFlow#ObjectManipulation"/>
         </owl:members>
     </rdf:Description>

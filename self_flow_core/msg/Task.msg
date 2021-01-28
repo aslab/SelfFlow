@@ -1,3 +1,4 @@
 string id
-string agent
 uint8 status
+string agent
+float64 utility

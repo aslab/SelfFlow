@@ -23,11 +23,10 @@ find_package(rmw_implementation_cmake REQUIRED)
 find_package(std_msgs REQUIRED)
 #find_package(geometry_msgs REQUIRED)
 
-set(library_name self_flow_agent)
+set(executable_name self_flow_agent)
 
 set(msg_files
   "msg/Task.msg"
-  "msg/Bid.msg"
 )
 
  rosidl_generate_interfaces(${PROJECT_NAME}
@@ -35,22 +34,22 @@ set(msg_files
  )
 
 
-#add_executable(start_agent
-# src/Start.cpp
-#)
-
-add_library(${library_name} SHARED
-  src/Agent.cpp
+add_executable(${executable_name}
+ src/Agent.cpp
 )
 
+#add_library(${executable_name} SHARED
+#  src/Agent.cpp
+#)
 
-target_include_directories(${library_name} PUBLIC
+
+target_include_directories(${executable_name} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
 
 
-ament_target_dependencies(${library_name}
+ament_target_dependencies(${executable_name}
  "rclcpp"
  "std_msgs"
 # "geometry_msgs"
@@ -61,16 +60,16 @@ find_package("${rmw_implementation}" REQUIRED)
 get_rmw_typesupport(typesupport_impls "${rmw_implementation}" LANGUAGE "cpp")
 
 foreach(typesupport_impl ${typesupport_impls})
-  rosidl_target_interfaces(${library_name}
+  rosidl_target_interfaces(${executable_name}
     ${PROJECT_NAME} ${typesupport_impl}
   )
 endforeach()
 
-install( TARGETS ${library_name}
+install( TARGETS ${executable_name}
   EXPORT EXPORT_${PROJECT_NAME}
   DESTINATION lib/${PROJECT_NAME})
 
-install(DIRECTORY launch
-  DESTINATION share/${PROJECT_NAME})
+#install(DIRECTORY launch
+#  DESTINATION share/${PROJECT_NAME})
 
 ament_package()

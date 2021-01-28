@@ -1,5 +1,4 @@
-#include "base_task.hpp"
-#include "position.hpp"
+#include "base.task"
 #include <stdlib.h>     /* srand, rand */
 
 class home_task : public base_task
@@ -13,14 +12,15 @@ public:
 
   std::string id() override
   {
-	std::string name="home_task";
+	std::string name="home";
 	return name;
   }
 
   void execute() override
   {
-	status=1;
-	request_position(2.5,3.0,0.0,1.0);
+	status=10;
+	std::cout<<"Move Home"<<std::endl;
+	//request_position(2.5,3.0,0.0,1.0);
   }
 
   int RequisiteCheck() override
@@ -49,9 +49,9 @@ public:
 	count++;
 	if(count==5)
 	{
-		status=2;
+		status=11;
         }
-	return status;  //-1:error, 0: not started, 1:in process, 2:finished
+	return status;  //-1:error, 0: not started, 10:in process, 11:finished, 12: failed
   }
 
   int tick_rate() override
