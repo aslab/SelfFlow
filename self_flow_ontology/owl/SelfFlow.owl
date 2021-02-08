@@ -27,6 +27,15 @@
     
 
 
+    <!-- http://Aslab/SelfFlow#dependsOn -->
+
+    <owl:ObjectProperty rdf:about="http://Aslab/SelfFlow#dependsOn">
+        <rdfs:domain rdf:resource="http://Aslab/SelfFlow#Action"/>
+        <rdfs:range rdf:resource="http://Aslab/SelfFlow#Ability"/>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://Aslab/SelfFlow#hasAbility -->
 
     <owl:ObjectProperty rdf:about="http://Aslab/SelfFlow#hasAbility">
@@ -94,6 +103,14 @@
     
 
 
+    <!-- http://Aslab/SelfFlow#Action -->
+
+    <owl:Class rdf:about="http://Aslab/SelfFlow#Action">
+        <rdfs:subClassOf rdf:resource="http://purl.org/ieee1872-owl/sumo-cora#Process"/>
+    </owl:Class>
+    
+
+
     <!-- http://Aslab/SelfFlow#AirNavigation -->
 
     <owl:Class rdf:about="http://Aslab/SelfFlow#AirNavigation">
@@ -148,6 +165,14 @@
     <owl:Class rdf:about="http://Aslab/SelfFlow#SLAM">
         <rdfs:subClassOf rdf:resource="http://Aslab/SelfFlow#GroundMapping"/>
         <rdfs:subClassOf rdf:resource="http://Aslab/SelfFlow#GroundNavigation"/>
+    </owl:Class>
+    
+
+
+    <!-- http://Aslab/SelfFlow#Task -->
+
+    <owl:Class rdf:about="http://Aslab/SelfFlow#Task">
+        <rdfs:subClassOf rdf:resource="http://Aslab/SelfFlow#Action"/>
     </owl:Class>
     
 
