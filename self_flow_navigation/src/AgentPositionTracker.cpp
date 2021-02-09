@@ -28,6 +28,7 @@ class AgentPositionTracker : public rclcpp::Node
 //	timer_ = this->create_wall_timer(500ms, std::bind(&AgentPositionTracker::timer_callback, this));
     }
 
+
     void PositionCallback(const std_msgs::msg::String::SharedPtr msg)
     {
 	if (msg->data=="home")
@@ -53,6 +54,9 @@ class AgentPositionTracker : public rclcpp::Node
 	  NavPub->publish(message);
 	  RCLCPP_INFO(this->get_logger(), "Requested position x='%f', y='%f',  z='%f'",message.pose.position.x, message.pose.position.y, message.pose.position.z);
 	}
+
+//	else if (msg->data=="map")
+//	else if (msg->data=="poi")
     }
   };
 

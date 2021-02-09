@@ -1,6 +1,7 @@
 #ifndef _BASE_TASK_
 #define _BASE_TASK_
 #include "../src/TaskStatus.hpp"
+#include "../src/request_position.cpp"
 
 class base_task
 {

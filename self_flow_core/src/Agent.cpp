@@ -63,12 +63,6 @@ public:
 //	task_list["example_task"]=tmp_ptr;
 
 //	load all tasks from this agent using ontology
-	while (1)
-	{
-	for (auto taskid : taskidlist)
-	{
-		knowledge_request(taskid, my_name);
-	}}
 
 	std::shared_ptr<base_task> tmp_ptr;
 	tmp_ptr=std::make_shared<idle_task>(* new idle_task);
@@ -79,6 +73,13 @@ public:
 //        task_list["find_object_task"]=tmp_ptr;
 
 	add_task("idle_task");
+
+
+
+	for (auto taskid : taskidlist)
+	{
+		knowledge_request(taskid, my_name);
+	}
 	this->task_update();
     }
 
@@ -193,16 +194,26 @@ public:
 		tmp_ptr=std::make_shared<find_object_task>(* new find_object_task);
        		task_list["find_object"]=tmp_ptr;
 	    }
-//	    else if(msg->id=="GroundMapping")
-//	    {
-//		tmp_ptr=std::make_shared<GroundMapping_task>(* new GroundMapping_task);
-//        	task_list["GroundMapping_task"]=tmp_ptr;
-//	    }
-//	    else if(msg->id=="ObjectDetection")
-//	    {
-//		tmp_ptr=std::make_shared<ObjectDetection_task>(* new ObjectDetection_task);
-//        	task_list["ObjectDetection_task"]=tmp_ptr;
-//	    }
+	    else if(msg->id=="interact")
+	    {
+		tmp_ptr=std::make_shared<interact_task>(* new interact_task);
+       		task_list["interact"]=tmp_ptr;
+	    }
+	    else if(msg->id=="interact_assist")
+	    {
+		tmp_ptr=std::make_shared<interact_assist_task>(* new interact_assist_task);
+       		task_list["interact_assist"]=tmp_ptr;
+	    }
+	    else if(msg->id=="map")
+	    {
+		tmp_ptr=std::make_shared<map_task>(* new map_task);
+       		task_list["map"]=tmp_ptr;
+	    }
+	    else if(msg->id=="moveto_coordinate")
+	    {
+		tmp_ptr=std::make_shared<moveto_coordinate_task>(* new moveto_coordinate_task);
+       		task_list["moveto_coordinate"]=tmp_ptr;
+	    }
 	    else
 	    {
 		RCLCPP_ERROR(this->get_logger(), "Bad task id");
@@ -340,7 +351,7 @@ int main(int argc, char * argv[])
 {
  rclcpp::init(argc, argv);
 
-  auto agent = std::make_shared<AgentNode>("agent_name");
+  auto agent = std::make_shared<AgentNode>("mapper");
   rclcpp::spin(agent);
 
   return 0;

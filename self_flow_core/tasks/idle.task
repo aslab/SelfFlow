@@ -6,7 +6,7 @@ public:
 
   std::string id() override
   {
-	std::string name="idle_task";
+	std::string name="idle";
 	return name;
   }
 

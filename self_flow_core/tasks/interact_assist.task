@@ -1,7 +1,7 @@
 #include "base.task"
 #include <stdlib.h>     /* srand, rand */
 
-class find_object_task : public base_task
+class interact_assist_task : public base_task
 {
 private:
 
@@ -12,25 +12,25 @@ public:
 
   std::string id() override
   {
-	std::string name="find_object";
+	std::string name="interact_assist";
 	return name;
   }
 
   void execute() override
   {
-	status=1;
+	status=10;
   }
 
   int RequisiteCheck() override
   {
-        if(TaskStatus.count("map")&&TaskStatus.at("map")==11)return 0;
+        if(TaskStatus.count("interact")&&TaskStatus.at("interact")==10)return 0;
         else return 1;
   }
 
   std::vector<std::string> RequisiteLoad() override
   {
         std::vector<std::string> v;
-        v.push_back(std::string("map"));
+        v.push_back(std::string("find_object"));
         return v;
   }
 
@@ -41,20 +41,19 @@ public:
 	return ut;
   }
 
-  int tick() override	//random wander
+  int tick() override
   {
 	count++;
-	if(count%5==0)
+	if(count>5 && TaskStatus.at("interact")!=10)
 	{
-		status=10;
-		request_position(std::string("object"));
+		status=11;
         }
 	return status;  //-1:error, 0: not started, 10:in process, 11:finished
   }
 
   int tick_rate() override
   {
-	return 20;
+	return 5;
   }
 
 };
